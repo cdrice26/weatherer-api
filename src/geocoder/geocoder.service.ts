@@ -5,8 +5,10 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class GeocoderService {
-  private configService: ConfigService = new ConfigService();
-  private httpService: HttpService = new HttpService();
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService
+  ) {}
 
   async geocode(
     address: string

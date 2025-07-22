@@ -5,15 +5,11 @@ import { CatsModule } from './cats/cats.module';
 import { upperDirectiveTransformer } from './common/directives/upper-case.directive';
 import { WeatherModule } from './weather/weather.module';
 import { ConfigModule } from '@nestjs/config';
-import { WeatherFetcherModule } from './weather-fetcher/weather-fetcher.module';
-import { GeocoderModule } from './geocoder/gecoder.module';
 
 @Module({
   imports: [
     CatsModule,
     WeatherModule,
-    WeatherFetcherModule,
-    GeocoderModule,
     ConfigModule.forRoot({
       isGlobal: true
     }),

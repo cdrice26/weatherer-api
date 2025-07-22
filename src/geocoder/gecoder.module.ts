@@ -4,6 +4,7 @@ import { GeocoderService } from './geocoder.service';
 
 @Module({
   imports: [HttpModule],
-  providers: [GeocoderService]
+  providers: [GeocoderService],
+  exports: [GeocoderService]
 })
 export class GeocoderModule {}

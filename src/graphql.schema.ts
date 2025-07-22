@@ -52,11 +52,11 @@ export class Cat {
 
 export class HistoricalWeatherData {
     year: number;
-    averageTemperature: number;
-    averageApparentTemperature: number;
-    precipitation: number;
-    snowfall: number;
-    maxWindSpeed: number;
+    averageTemperature?: Nullable<number>;
+    averageApparentTemperature?: Nullable<number>;
+    precipitation?: Nullable<number>;
+    snowfall?: Nullable<number>;
+    maxWindSpeed?: Nullable<number>;
 }
 
 export class RegressionResults {

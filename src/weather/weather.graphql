@@ -9,11 +9,11 @@ input WeatherDataInput {
 # Type representing historical weather data for a specific year
 type HistoricalWeatherData {
   year: Int!
-  averageTemperature: Float!
-  averageApparentTemperature: Float!
-  precipitation: Float!
-  snowfall: Float!
-  maxWindSpeed: Float!
+  averageTemperature: Float
+  averageApparentTemperature: Float
+  precipitation: Float
+  snowfall: Float
+  maxWindSpeed: Float
 }
 
 # Type representing the results of the regression analysis
