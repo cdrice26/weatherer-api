@@ -18,7 +18,7 @@ type HistoricalWeatherData {
 
 # Type representing the results of the regression analysis
 type RegressionResults {
-  equation: String!
+  coefficients: [Float]!
   rSquared: Float!
   regressionType: String! # e.g., "linear", "polynomial"
   testResults: WaldTestResults!

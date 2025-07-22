@@ -1,32 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { WeatherAnalysis } from '../graphql.schema';
+import { WeatherFetcherService } from 'src/weather-fetcher/weather-fetcher.service';
+import { GeocoderService } from 'src/geocoder/geocoder.service';
 
 @Injectable()
 export class WeatherService {
-  private readonly weather: WeatherAnalysis = {
-    historicalData: [
-      {
-        year: 2020,
-        averageTemperature: 15.5,
-        averageApparentTemperature: 16.0,
-        precipitation: 120.5,
-        snowfall: 30.0,
-        maxWindSpeed: 25.0
-      }
-    ],
-    regression: {
-      equation: 'y = 0.5x + 10',
-      rSquared: 0.95,
-      regressionType: 'linear',
-      testResults: {
-        pValue: 0.01,
-        tStatistic: 2.5,
-        significant: true
-      }
-    }
-  };
+  private readonly weatherFetcherService = new WeatherFetcherService();
+  private readonly geocoderService = new GeocoderService();
 
-  findAll(): WeatherAnalysis {
-    return this.weather;
+  async findAll(
+    location,
+    startYear,
+    endYear,
+    averageYears,
+    fields: string[]
+  ): Promise<WeatherAnalysis> {
+    const { latitude, longitude } =
+      await this.geocoderService.geocode(location);
+    return this.weatherFetcherService.findAll(
+      latitude,
+      longitude,
+      startYear,
+      endYear,
+      fields
+    );
   }
 }

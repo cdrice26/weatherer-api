@@ -60,7 +60,7 @@ export class HistoricalWeatherData {
 }
 
 export class RegressionResults {
-    equation: string;
+    coefficients: Nullable<number>[];
     rSquared: number;
     regressionType: string;
     testResults: WaldTestResults;
