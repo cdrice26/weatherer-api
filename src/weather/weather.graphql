@@ -1,0 +1,43 @@
+# Input type for the weather data request
+input WeatherDataInput {
+  location: String!
+  startYear: Int!
+  endYear: Int!
+  averageYears: Int!
+}
+
+# Type representing historical weather data for a specific year
+type HistoricalWeatherData {
+  year: Int!
+  averageTemperature: Float!
+  averageApparentTemperature: Float!
+  precipitation: Float!
+  snowfall: Float!
+  maxWindSpeed: Float!
+}
+
+# Type representing the results of the regression analysis
+type RegressionResults {
+  equation: String!
+  rSquared: Float!
+  regressionType: String! # e.g., "linear", "polynomial"
+  testResults: WaldTestResults!
+}
+
+# Type representing the results of the Wald t-test
+type WaldTestResults {
+  tStatistic: Float!
+  pValue: Float!
+  significant: Boolean!
+}
+
+# Main type that combines all results
+type WeatherAnalysis {
+  historicalData: [HistoricalWeatherData!]!
+  regression: RegressionResults!
+}
+
+# Query type for fetching weather analysis
+type Query {
+  weatherAnalysis(input: WeatherDataInput!): WeatherAnalysis!
+}
