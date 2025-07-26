@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { HistoricalWeatherData } from '../graphql.schema';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { getThisYear, getTwoDaysAgo } from 'src/utils/dateUtils';
-import { convertToArrayOfObjects } from 'src/utils/dataUtils';
+import { getThisYear, getTwoDaysAgo } from '../utils/dateUtils';
+import { convertToArrayOfObjects } from '../utils/dataUtils';
 
 type WeatherResponse = (HistoricalWeatherData & { date: Date })[];
 

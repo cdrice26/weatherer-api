@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { WeatherAnalysis } from '../graphql.schema';
-import { WeatherFetcherService } from 'src/weather-fetcher/weather-fetcher.service';
-import { GeocoderService } from 'src/geocoder/geocoder.service';
+import { WeatherFetcherService } from '../weather-fetcher/weather-fetcher.service';
+import { GeocoderService } from '../geocoder/geocoder.service';
 
 @Injectable()
 export class WeatherService {

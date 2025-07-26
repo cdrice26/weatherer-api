@@ -1,5 +1,5 @@
 import { Args, Resolver, Query, Info } from '@nestjs/graphql';
-import { WeatherDataInput, WeatherAnalysis } from 'src/graphql.schema';
+import { WeatherDataInput, WeatherAnalysis } from '../graphql.schema';
 import { WeatherService } from './weather.service';
 import { GraphQLResolveInfo, SelectionNode } from 'graphql';
 
