@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WeatherResolver } from './weather.resolver';
 import { WeatherService } from './weather.service';
-import { GraphQLError } from 'graphql';
-import { GraphQLResolveInfo } from 'graphql';
+import { RateLimitService } from '../rate-limit/rate-limit.service';
+import { GraphQLError, GraphQLResolveInfo } from 'graphql';
 import { WeatherAnalysis } from '../graphql.schema';
 
 describe('WeatherResolver', () => {
@@ -13,11 +13,16 @@ describe('WeatherResolver', () => {
     findAll: jest.fn()
   };
 
+  const mockRateLimitService = {
+    isUnderLimit: jest.fn(() => true)
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WeatherResolver,
-        { provide: WeatherService, useValue: mockWeatherService }
+        { provide: WeatherService, useValue: mockWeatherService },
+        { provide: RateLimitService, useValue: mockRateLimitService }
       ]
     }).compile();
 
@@ -86,9 +91,11 @@ describe('WeatherResolver', () => {
 
   it('should return weather analysis from service', async () => {
     mockWeatherService.findAll.mockResolvedValue(mockResult);
+    mockRateLimitService.isUnderLimit.mockReturnValue(true);
 
     const result = await resolver.getWeatherAnalysis(mockInput, mockInfo);
 
+    expect(mockRateLimitService.isUnderLimit).toHaveBeenCalled();
     expect(mockWeatherService.findAll).toHaveBeenCalledWith(
       mockInput.location,
       mockInput.startYear,
@@ -103,16 +110,32 @@ describe('WeatherResolver', () => {
   });
 
   it('should throw GraphQLError if service throws', async () => {
+    mockRateLimitService.isUnderLimit.mockReturnValue(true);
     mockWeatherService.findAll.mockRejectedValue(new Error('Service exploded'));
 
     await expect(
       resolver.getWeatherAnalysis(mockInput, mockInfo)
     ).rejects.toThrow(GraphQLError);
+
     await expect(
       resolver.getWeatherAnalysis(mockInput, mockInfo)
     ).rejects.toMatchObject({
       message: 'Unexpected error during weather analysis',
       extensions: { code: 'WEATHER_ANALYSIS_FAILED' }
     });
+  });
+
+  it('should throw GraphQLError if rate limit is exceeded', async () => {
+    mockRateLimitService.isUnderLimit.mockReturnValue(false);
+    mockWeatherService.findAll.mockClear();
+
+    await expect(
+      resolver.getWeatherAnalysis(mockInput, mockInfo)
+    ).rejects.toMatchObject({
+      message: 'Daily weather API call limit reached',
+      extensions: { code: 'RATE_LIMIT_EXCEEDED' }
+    });
+
+    expect(mockWeatherService.findAll).not.toHaveBeenCalled();
   });
 });

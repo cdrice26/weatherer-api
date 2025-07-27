@@ -2,12 +2,16 @@ import { Args, Resolver, Query, Info } from '@nestjs/graphql';
 import { WeatherDataInput, WeatherAnalysis } from '../graphql.schema';
 import { WeatherService } from './weather.service';
 import { GraphQLError, GraphQLResolveInfo, SelectionNode } from 'graphql';
+import { RateLimitService } from '../rate-limit/rate-limit.service';
 /**
  * Resolver for handling GraphQL queries related to weather analysis.
  */
 @Resolver('WeatherAnalysis')
 export class WeatherResolver {
-  constructor(private readonly weatherService: WeatherService) {}
+  constructor(
+    private readonly weatherService: WeatherService,
+    private readonly rateLimitService: RateLimitService
+  ) {}
 
   /**
    * GraphQL query to get weather analysis based on the provided input.
@@ -21,6 +25,12 @@ export class WeatherResolver {
     @Args('input') input: WeatherDataInput,
     @Info() info: GraphQLResolveInfo
   ): Promise<WeatherAnalysis> {
+    if (!this.rateLimitService.isUnderLimit()) {
+      throw new GraphQLError('Daily weather API call limit reached', {
+        extensions: { code: 'RATE_LIMIT_EXCEEDED' }
+      });
+    }
+
     const [fields, regressionFields] = this.getRequestedFields(info);
     try {
       return await this.weatherService.findAll(
