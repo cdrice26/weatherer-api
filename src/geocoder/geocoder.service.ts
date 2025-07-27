@@ -20,16 +20,17 @@ export class GeocoderService {
    * Geocodes a given address to its corresponding latitude and longitude.
    *
    * @param {string} address - The address to geocode.
-   * @returns {Promise<{ latitude: number; longitude: number }>} - A promise that resolves to an object containing latitude and longitude.
+   * @returns {Promise<{ latitude: number; longitude: number; name: string; }>} - A promise that resolves to an object containing latitude and longitude.
    * @throws {Error} - Throws an error if the geocoding fails or if the response is invalid.
    */
   async geocode(
     address: string
-  ): Promise<{ latitude: number; longitude: number }> {
+  ): Promise<{ latitude: number; longitude: number; name: string }> {
     try {
       const cached = await this.cacheManager.get<{
         latitude: number;
         longitude: number;
+        name: string;
       }>(address);
       if (cached) {
         return cached;
@@ -47,7 +48,8 @@ export class GeocoderService {
       }
       const result = {
         latitude: coords.lat,
-        longitude: coords.lon
+        longitude: coords.lon,
+        name: coords.display_name
       };
       await this.cacheManager.set(address, result);
       return result;

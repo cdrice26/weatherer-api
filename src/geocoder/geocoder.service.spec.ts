@@ -66,7 +66,8 @@ describe('GeocoderService', () => {
       data: [
         {
           lat: 40.7128,
-          lon: -74.006
+          lon: -74.006,
+          name: '123 main st'
         }
       ],
       status: 200,

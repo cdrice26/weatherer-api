@@ -43,6 +43,7 @@ type FTestResults {
 type WeatherAnalysis {
   historicalData: [HistoricalWeatherData!]!
   regression: Regression!
+  locationName: String
 }
 
 # Query type for fetching weather analysis
