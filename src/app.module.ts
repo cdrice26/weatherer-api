@@ -4,6 +4,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { upperDirectiveTransformer } from './common/directives/upper-case.directive';
 import { WeatherModule } from './weather/weather.module';
 import { ConfigModule } from '@nestjs/config';
+import { weatherSchema } from './weather/schema-loader';
 
 @Module({
   imports: [
@@ -13,9 +14,8 @@ import { ConfigModule } from '@nestjs/config';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      typePaths: ['./**/*.graphql'],
-      transformSchema: (schema) => upperDirectiveTransformer(schema, 'upper'),
-      installSubscriptionHandlers: true
+      typeDefs: weatherSchema,
+      transformSchema: (schema) => upperDirectiveTransformer(schema, 'upper')
     })
   ]
 })
