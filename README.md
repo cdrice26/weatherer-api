@@ -97,6 +97,8 @@ GEOCODER_API_KEY=your_maps_co_key_here
 REGRESSION_API_URL=https://your-regression-api.com/analyze
 ```
 
+Note that the geocoder api key is for [geocode.maps.co](https://geocode.maps.co). Additionally, the regression API is in [this repo](https://github.com/cdrice26/regression-api) - you will need to set that up as well.
+
 ---
 
 ## Citation for Open-Meteo
