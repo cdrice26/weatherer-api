@@ -1,8 +1,7 @@
 import { Args, Resolver, Query, Info } from '@nestjs/graphql';
 import { WeatherDataInput, WeatherAnalysis } from '../graphql.schema';
 import { WeatherService } from './weather.service';
-import { GraphQLResolveInfo, SelectionNode } from 'graphql';
-
+import { GraphQLError, GraphQLResolveInfo, SelectionNode } from 'graphql';
 /**
  * Resolver for handling GraphQL queries related to weather analysis.
  */
@@ -23,15 +22,23 @@ export class WeatherResolver {
     @Info() info: GraphQLResolveInfo
   ): Promise<WeatherAnalysis> {
     const [fields, regressionFields] = this.getRequestedFields(info);
-    return await this.weatherService.findAll(
-      input.location,
-      input.startYear,
-      input.endYear,
-      input.averageYears,
-      fields,
-      regressionFields,
-      input.regressionDegree
-    );
+    try {
+      return await this.weatherService.findAll(
+        input.location,
+        input.startYear,
+        input.endYear,
+        input.averageYears,
+        fields,
+        regressionFields,
+        input.regressionDegree
+      );
+    } catch (error) {
+      throw new GraphQLError('Unexpected error during weather analysis', {
+        extensions: {
+          code: 'WEATHER_ANALYSIS_FAILED'
+        }
+      });
+    }
   }
 
   /**
