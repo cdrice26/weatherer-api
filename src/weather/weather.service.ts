@@ -36,7 +36,7 @@ export class WeatherService {
     regressionFields: string[],
     regressionDegree: number
   ): Promise<WeatherAnalysis> {
-    const { latitude, longitude } =
+    const { latitude, longitude, name } =
       await this.geocoderService.geocode(location);
     const historicalData = await this.weatherFetcherService.findAll(
       latitude,
@@ -54,7 +54,8 @@ export class WeatherService {
     );
     return {
       historicalData,
-      regression
+      regression,
+      locationName: name
     };
   }
 }

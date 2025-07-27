@@ -82,7 +82,8 @@ describe('WeatherResolver', () => {
           fStatistic: 10.4
         }
       }
-    }
+    },
+    locationName: 'Location'
   };
 
   it('should be defined', () => {

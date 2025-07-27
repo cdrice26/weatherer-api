@@ -8,47 +8,12 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export class CreateCatInput {
-    name?: Nullable<string>;
-    age?: Nullable<number>;
-}
-
 export class WeatherDataInput {
     location: string;
     startYear: number;
     endYear: number;
     averageYears: number;
     regressionDegree: number;
-}
-
-export abstract class IQuery {
-    abstract cats(): Nullable<Nullable<Cat>[]> | Promise<Nullable<Nullable<Cat>[]>>;
-
-    abstract cat(id: string): Nullable<Cat> | Promise<Nullable<Cat>>;
-
-    abstract weatherAnalysis(input: WeatherDataInput): WeatherAnalysis | Promise<WeatherAnalysis>;
-}
-
-export abstract class IMutation {
-    abstract createCat(createCatInput?: Nullable<CreateCatInput>): Nullable<Cat> | Promise<Nullable<Cat>>;
-}
-
-export abstract class ISubscription {
-    abstract catCreated(): Nullable<Cat> | Promise<Nullable<Cat>>;
-}
-
-export class Owner {
-    id: number;
-    name: string;
-    age?: Nullable<number>;
-    cats?: Nullable<Cat[]>;
-}
-
-export class Cat {
-    id?: Nullable<number>;
-    name?: Nullable<string>;
-    age?: Nullable<number>;
-    owner?: Nullable<Owner>;
 }
 
 export class HistoricalWeatherData {
@@ -83,6 +48,11 @@ export class FTestResults {
 export class WeatherAnalysis {
     historicalData: HistoricalWeatherData[];
     regression: Regression;
+    locationName?: Nullable<string>;
+}
+
+export abstract class IQuery {
+    abstract weatherAnalysis(input: WeatherDataInput): WeatherAnalysis | Promise<WeatherAnalysis>;
 }
 
 type Nullable<T> = T | null;
