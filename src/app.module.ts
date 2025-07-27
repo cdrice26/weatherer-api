@@ -1,14 +1,12 @@
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
-import { CatsModule } from './cats/cats.module';
 import { upperDirectiveTransformer } from './common/directives/upper-case.directive';
 import { WeatherModule } from './weather/weather.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    CatsModule,
     WeatherModule,
     ConfigModule.forRoot({
       isGlobal: true
