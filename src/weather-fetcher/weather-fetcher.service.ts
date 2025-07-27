@@ -65,23 +65,27 @@ export class WeatherFetcherService {
     fields: string[],
     useDefault = false
   ): Promise<HistoricalWeatherData[]> {
-    const weatherData = await this.fetchWeatherData(
-      lat,
-      lon,
-      startYear - (averageYears - 1),
-      endYear,
-      fields,
-      useDefault
-    );
+    try {
+      const weatherData = await this.fetchWeatherData(
+        lat,
+        lon,
+        startYear - (averageYears - 1),
+        endYear,
+        fields,
+        useDefault
+      );
 
-    const historicalData = this.averageWeatherData(
-      weatherData,
-      startYear,
-      endYear,
-      averageYears
-    );
+      const historicalData = this.averageWeatherData(
+        weatherData,
+        startYear,
+        endYear,
+        averageYears
+      );
 
-    return historicalData;
+      return historicalData;
+    } catch (e) {
+      throw new Error('Failed to fetch weather data');
+    }
   }
 
   /**
@@ -152,7 +156,6 @@ export class WeatherFetcherService {
         })
       );
     } catch (error) {
-      console.error(error);
       throw new Error('Failed to fetch weather data');
     }
   }
