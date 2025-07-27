@@ -3,6 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 
+/**
+ * Service for geocoding addresses to latitude and longitude coordinates.
+ */
 @Injectable()
 export class GeocoderService {
   constructor(
@@ -10,6 +13,13 @@ export class GeocoderService {
     private readonly configService: ConfigService
   ) {}
 
+  /**
+   * Geocodes a given address to its corresponding latitude and longitude.
+   *
+   * @param {string} address - The address to geocode.
+   * @returns {Promise<{ latitude: number; longitude: number }>} - A promise that resolves to an object containing latitude and longitude.
+   * @throws {Error} - Throws an error if the geocoding fails or if the response is invalid.
+   */
   async geocode(
     address: string
   ): Promise<{ latitude: number; longitude: number }> {

@@ -3,10 +3,20 @@ import { WeatherDataInput, WeatherAnalysis } from '../graphql.schema';
 import { WeatherService } from './weather.service';
 import { GraphQLResolveInfo, SelectionNode } from 'graphql';
 
+/**
+ * Resolver for handling GraphQL queries related to weather analysis.
+ */
 @Resolver('WeatherAnalysis')
 export class WeatherResolver {
   constructor(private readonly weatherService: WeatherService) {}
 
+  /**
+   * GraphQL query to get weather analysis based on the provided input.
+   *
+   * @param {WeatherDataInput} input - The input data for the weather analysis query.
+   * @param {GraphQLResolveInfo} info - Information about the GraphQL query execution.
+   * @returns {Promise<WeatherAnalysis>} - A promise that resolves to the weather analysis result.
+   */
   @Query('weatherAnalysis')
   async getWeatherAnalysis(
     @Args('input') input: WeatherDataInput,
@@ -24,6 +34,12 @@ export class WeatherResolver {
     );
   }
 
+  /**
+   * Extracts the requested fields from the GraphQL query information.
+   *
+   * @param {GraphQLResolveInfo} info - Information about the GraphQL query execution.
+   * @returns {string[][]} - An array containing two arrays: one for fields and one for regression fields.
+   */
   private getRequestedFields(info: GraphQLResolveInfo): string[][] {
     const fields: string[] = [];
     const regressionFields: string[] = [];

@@ -1,8 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { HistoricalWeatherData, Regression } from 'src/graphql.schema';
 
+/**
+ * Service for performing regression analysis on historical weather data.
+ */
 @Injectable()
 export class RegressionService {
+  /**
+   * Performs regression analysis on the provided historical weather data.
+   *
+   * @param {HistoricalWeatherData[]} data - The historical weather data to analyze.
+   * @param {number} regressionDegree - The degree of the polynomial regression.
+   * @param {string[]} fields - The fields to perform regression analysis on.
+   * @param {number} alpha - The significance level for hypothesis testing.
+   * @returns {Promise<Regression>} - A promise that resolves to the regression results.
+   */
   async performRegression(
     data: HistoricalWeatherData[],
     regressionDegree: number,
@@ -29,7 +41,6 @@ export class RegressionService {
       }
 
       const result = await response.json();
-      console.log(result);
       return {
         coefficients: result.coefficients,
         rSquared: result.r_squared,

@@ -5,6 +5,9 @@ import { getThisYear, getTwoDaysAgo } from '../utils/dateUtils';
 import { convertToArrayOfObjects } from '../utils/dataUtils';
 import { HistoricalWeatherData } from 'src/graphql.schema';
 
+/**
+ * Interface representing the structure of the weather response data.
+ */
 interface WeatherResponse {
   year?: number;
   date?: Date;
@@ -15,6 +18,9 @@ interface WeatherResponse {
   maxWindSpeed?: number;
 }
 
+/**
+ * Service for fetching historical weather data.
+ */
 @Injectable()
 export class WeatherFetcherService {
   constructor(private readonly httpService: HttpService) {}
@@ -38,6 +44,18 @@ export class WeatherFetcherService {
     }
   ];
 
+  /**
+   * Fetches historical weather data for a specified location and time range.
+   *
+   * @param {number} lat - The latitude of the location.
+   * @param {number} lon - The longitude of the location.
+   * @param {number} startYear - The starting year for the data.
+   * @param {number} endYear - The ending year for the data.
+   * @param {number} averageYears - The number of years to average the data over.
+   * @param {string[]} fields - The fields to include in the response.
+   * @param {boolean} [useDefault=false] - Whether to use default weather data for testing.
+   * @returns {Promise<HistoricalWeatherData[]>} - A promise that resolves to an array of historical weather data.
+   */
   async findAll(
     lat: number,
     lon: number,
@@ -66,6 +84,17 @@ export class WeatherFetcherService {
     return historicalData;
   }
 
+  /**
+   * Fetches weather data from an external API.
+   *
+   * @param {number} lat - The latitude of the location.
+   * @param {number} lon - The longitude of the location.
+   * @param {number} startYear - The starting year for the data.
+   * @param {number} endYear - The ending year for the data.
+   * @param {string[]} fields - The fields to include in the response.
+   * @param {boolean} [useDefault=false] - Whether to use default weather data for testing.
+   * @returns {Promise<WeatherResponse[]>} - A promise that resolves to an array of weather response data.
+   */
   async fetchWeatherData(
     lat: number,
     lon: number,
@@ -128,6 +157,12 @@ export class WeatherFetcherService {
     }
   }
 
+  /**
+   * Parses the fields to match the API's expected format.
+   *
+   * @param {string[]} fields - The fields to parse.
+   * @returns {string[]} - An array of parsed field names.
+   */
   parseFields(fields: string[]): string[] {
     return fields
       .map((field) => {
@@ -149,6 +184,15 @@ export class WeatherFetcherService {
       .filter((field) => field !== null);
   }
 
+  /**
+   * Averages the weather data over a specified range of years.
+   *
+   * @param {WeatherResponse[]} data - The weather data to average.
+   * @param {number} startYear - The starting year for averaging.
+   * @param {number} endYear - The ending year for averaging.
+   * @param {number} movingAverageYears - The number of years to consider for the moving average.
+   * @returns {HistoricalWeatherData[]} - An array of averaged historical weather data.
+   */
   averageWeatherData(
     data: WeatherResponse[],
     startYear: number,
