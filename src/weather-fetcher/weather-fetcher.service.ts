@@ -68,7 +68,7 @@ export class WeatherFetcherService {
     const weatherData = await this.fetchWeatherData(
       lat,
       lon,
-      startYear - averageYears,
+      startYear - (averageYears - 1),
       endYear,
       fields,
       useDefault
@@ -129,7 +129,7 @@ export class WeatherFetcherService {
       }
       return convertToArrayOfObjects<string | number>(data.daily).map(
         (day) => ({
-          date: new Date(day.time),
+          date: new Date(day.time + 'T00:00:00'),
           year: new Date(day.time).getFullYear(),
           averageTemperature:
             typeof day.temperature_2m_mean === 'number'
