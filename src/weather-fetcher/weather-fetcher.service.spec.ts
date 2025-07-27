@@ -42,7 +42,7 @@ describe('WeatherFetcherService', () => {
       const mockApiResponse: AxiosResponse = {
         data: {
           daily: {
-            time: ['2021-01-01'],
+            time: ['2021-01-01T00:00:00'],
             temperature_2m_mean: [30],
             apparent_temperature_mean: [28],
             precipitation_sum: [0.5],
@@ -71,7 +71,7 @@ describe('WeatherFetcherService', () => {
 
       expect(result).toEqual([
         expect.objectContaining({
-          year: 2020,
+          year: 2021,
           averageTemperature: 30,
           precipitation: 0.5
         })
