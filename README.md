@@ -24,6 +24,13 @@ src/
 
 ---
 
+## Usage
+
+Clone the repo, and run a dev server with `npm run start:dev`. Then open `http://localhost:3000/graphql` in a browser and use the playground to interact with the API.
+
+
+---
+
 ## 🚀 Features
 
 - 🔍 Geocodes locations using [Maps.co API](https://geocode.maps.co/)
@@ -89,37 +96,3 @@ Create a `.env` file at the project root:
 GEOCODER_API_KEY=your_maps_co_key_here
 REGRESSION_API_URL=https://your-regression-api.com/analyze
 ```
-
----
-
-## 📚 How It Works
-
-### WeatherService (Orchestration)
-- Uses `GeocoderService` to resolve latitude/longitude from address
-- Fetches weather data with `WeatherFetcherService` and aggregates by year
-- Passes structured data to `RegressionService` to generate regression models
-
-### GraphQL Resolver
-- Extracts requested fields from GraphQL `resolveInfo`
-- Delegates to `WeatherService` and handles errors with `GraphQLError`
-
----
-
-## 🔐 Error Handling
-
-If any service throws an error, the resolver responds with a `GraphQLError`:
-
-```json
-{
-  "errors": [
-    {
-      "message": "Service exploded",
-      "extensions": {
-        "code": "WEATHER_ANALYSIS_FAILED"
-      }
-    }
-  ]
-}
-```
-
-Clean and predictable GraphQL responses for better client-side handling.
