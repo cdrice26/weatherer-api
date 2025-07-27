@@ -111,7 +111,7 @@ export class WeatherFetcherService {
       console.warn('Using default weather data for testing');
       return this.defaultWeather.map((data) => ({
         ...data,
-        date: new Date(`${data.year}-01-01`)
+        date: new Date(`${data.year}-01-01T00:00:00`)
       }));
     }
     try {
