@@ -18,6 +18,7 @@ export class WeatherDataInput {
     startYear: number;
     endYear: number;
     averageYears: number;
+    regressionDegree: number;
 }
 
 export abstract class IQuery {
@@ -59,22 +60,29 @@ export class HistoricalWeatherData {
     maxWindSpeed?: Nullable<number>;
 }
 
+export class Regression {
+    averageTemperature?: Nullable<RegressionResults>;
+    averageApparentTemperature?: Nullable<RegressionResults>;
+    precipitation?: Nullable<RegressionResults>;
+    snowfall?: Nullable<RegressionResults>;
+    maxWindSpeed?: Nullable<RegressionResults>;
+}
+
 export class RegressionResults {
     coefficients: Nullable<number>[];
     rSquared: number;
-    regressionType: string;
-    testResults: WaldTestResults;
+    testResults: FTestResults;
 }
 
-export class WaldTestResults {
-    tStatistic: number;
+export class FTestResults {
+    fStatistic: number;
     pValue: number;
     significant: boolean;
 }
 
 export class WeatherAnalysis {
     historicalData: HistoricalWeatherData[];
-    regression: RegressionResults;
+    regression: Regression;
 }
 
 type Nullable<T> = T | null;

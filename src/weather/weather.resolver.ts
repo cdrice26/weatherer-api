@@ -12,18 +12,21 @@ export class WeatherResolver {
     @Args('input') input: WeatherDataInput,
     @Info() info: GraphQLResolveInfo
   ): Promise<WeatherAnalysis> {
-    const fields = this.getRequestedFields(info);
+    const [fields, regressionFields] = this.getRequestedFields(info);
     return await this.weatherService.findAll(
       input.location,
       input.startYear,
       input.endYear,
       input.averageYears,
-      fields
+      fields,
+      regressionFields,
+      input.regressionDegree
     );
   }
 
-  private getRequestedFields(info: GraphQLResolveInfo): string[] {
+  private getRequestedFields(info: GraphQLResolveInfo): string[][] {
     const fields: string[] = [];
+    const regressionFields: string[] = [];
     const fieldNodes = info.fieldNodes[0].selectionSet.selections;
 
     fieldNodes.forEach((field: SelectionNode) => {
@@ -33,6 +36,12 @@ export class WeatherResolver {
           field.selectionSet.selections.forEach((subField: SelectionNode) => {
             if (subField.kind === 'Field') {
               fields.push(subField.name.value);
+            }
+          });
+        } else if (field.name.value === 'regression' && field.selectionSet) {
+          field.selectionSet.selections.forEach((subField: SelectionNode) => {
+            if (subField.kind === 'Field') {
+              regressionFields.push(subField.name.value);
             }
           });
         } else {
@@ -49,6 +58,6 @@ export class WeatherResolver {
       }
     });
 
-    return fields;
+    return [fields, regressionFields];
   }
 }

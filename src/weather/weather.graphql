@@ -4,6 +4,7 @@ input WeatherDataInput {
   startYear: Int!
   endYear: Int!
   averageYears: Int!
+  regressionDegree: Int!
 }
 
 # Type representing historical weather data for a specific year
@@ -16,17 +17,24 @@ type HistoricalWeatherData {
   maxWindSpeed: Float
 }
 
+type Regression {
+  averageTemperature: RegressionResults
+  averageApparentTemperature: RegressionResults
+  precipitation: RegressionResults
+  snowfall: RegressionResults
+  maxWindSpeed: RegressionResults
+}
+
 # Type representing the results of the regression analysis
 type RegressionResults {
   coefficients: [Float]!
   rSquared: Float!
-  regressionType: String! # e.g., "linear", "polynomial"
-  testResults: WaldTestResults!
+  testResults: FTestResults!
 }
 
-# Type representing the results of the Wald t-test
-type WaldTestResults {
-  tStatistic: Float!
+# Type representing the results of the F-test
+type FTestResults {
+  fStatistic: Float!
   pValue: Float!
   significant: Boolean!
 }
@@ -34,7 +42,7 @@ type WaldTestResults {
 # Main type that combines all results
 type WeatherAnalysis {
   historicalData: [HistoricalWeatherData!]!
-  regression: RegressionResults!
+  regression: Regression!
 }
 
 # Query type for fetching weather analysis

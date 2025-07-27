@@ -1,17 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { HistoricalWeatherData } from '../graphql.schema';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { getThisYear, getTwoDaysAgo } from '../utils/dateUtils';
 import { convertToArrayOfObjects } from '../utils/dataUtils';
+import { HistoricalWeatherData } from 'src/graphql.schema';
 
-type WeatherResponse = (HistoricalWeatherData & { date: Date })[];
+interface WeatherResponse {
+  year?: number;
+  date?: Date;
+  averageTemperature?: number;
+  averageApparentTemperature?: number;
+  precipitation?: number;
+  snowfall?: number;
+  maxWindSpeed?: number;
+}
 
 @Injectable()
 export class WeatherFetcherService {
   constructor(private readonly httpService: HttpService) {}
 
-  private readonly defaultWeather: HistoricalWeatherData[] = [
+  private readonly defaultWeather: WeatherResponse[] = [
     {
       year: 2020,
       averageTemperature: 15.5,
@@ -65,7 +73,7 @@ export class WeatherFetcherService {
     endYear: number,
     fields: string[],
     useDefault = false
-  ): Promise<WeatherResponse> {
+  ): Promise<WeatherResponse[]> {
     if (useDefault) {
       console.warn('Using default weather data for testing');
       return this.defaultWeather.map((data) => ({
@@ -90,7 +98,6 @@ export class WeatherFetcherService {
       if (!data || !data.daily) {
         throw new Error('Invalid weather data response');
       }
-      console.log(data);
       return convertToArrayOfObjects<string | number>(data.daily).map(
         (day) => ({
           date: new Date(day.time),
@@ -143,7 +150,7 @@ export class WeatherFetcherService {
   }
 
   averageWeatherData(
-    data: WeatherResponse,
+    data: WeatherResponse[],
     startYear: number,
     endYear: number,
     movingAverageYears: number
