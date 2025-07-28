@@ -92,3 +92,5 @@ Muñoz Sabater, J. (2019). ERA5-Land hourly data from 2001 to present [Data set]
 Schimanke S., Ridal M., Le Moigne P., Berggren L., Undén P., Randriamampianina R., Andrea U., Bazile E., Bertelsen A., Brousseau P., Dahlgren P., Edvinsson L., El Said A., Glinton M., Hopsch S., Isaksson L., Mladek R., Olsson E., Verrelle A., Wang Z.Q. (2021). CERRA sub-daily regional reanalysis data for Europe on single levels from 1984 to present [Data set]. ECMWF. https://doi.org/10.24381/CDS.622A565A
 
 Generated using Copernicus Climate Change Service information 2022.
+
+> **NOTE**: Please include the above citations if you use this API.
