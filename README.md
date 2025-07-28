@@ -62,6 +62,7 @@ query {
         }
       }
     }
+    locationName
   }
 }
 ```
