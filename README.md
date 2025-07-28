@@ -4,26 +4,6 @@ A NestJS-powered backend service that fetches historical weather data, performs 
 
 ---
 
-## 📦 Project Structure
-
-```text
-src/
-├── geocoder/                # Geocoding service
-│   └── geocoder.service.ts
-├── regression/              # Regression analysis service
-│   └── regression.service.ts
-├── weather-fetcher/         # Weather data retrieval and aggregation
-│   ├── weather-fetcher.service.ts
-├── weather/                 # Weather service and resolver
-│   ├── weather.service.ts
-│   └── weather.resolver.ts
-├── graphql.schema.ts        # Type definitions from GraphQL schema. This is auto-generated with generate-typings.ts
-└── utils/                   # Utility functions
-    └── dateUtils.ts, dataUtils.ts
-```
-
----
-
 ## Usage
 
 Clone the repo, and run a dev server with `npm run start:dev`. Then open `http://localhost:3000/graphql` in a browser and use the playground to interact with the API.
