@@ -67,6 +67,8 @@ query {
 }
 ```
 
+DISCLAIMER: The API is subject to change without warning. Use at your own risk!
+
 ---
 
 ## 🛠 Environment Variables
