@@ -9,6 +9,11 @@ const server = express();
 
 async function createApp() {
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: ['Content-Type', 'Authorization']
+  });
   app.useGlobalPipes(new ValidationPipe());
   await app.init();
   return server;
