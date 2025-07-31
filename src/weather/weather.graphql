@@ -5,48 +5,50 @@ input WeatherDataInput {
   endYear: Int!
   averageYears: Int!
   regressionDegree: Int!
+  metrics: [WeatherMetric!]! # Specify which metrics to analyze
 }
 
-# Type representing historical weather data for a specific year
-type HistoricalWeatherData {
+# Enum to represent different types of metrics
+enum WeatherMetric {
+  AVERAGE_TEMPERATURE
+  AVERAGE_APPARENT_TEMPERATURE
+  PRECIPITATION
+  SNOWFALL
+  MAX_WIND_SPEED
+}
+
+# Historical data entry for a specific year and metric
+type HistoricalMetricData {
+  metric: WeatherMetric!
   year: Int!
-  averageTemperature: Float
-  averageApparentTemperature: Float
-  precipitation: Float
-  snowfall: Float
-  maxWindSpeed: Float
+  value: Float
 }
 
-type Regression {
-  averageTemperature: RegressionResults
-  averageApparentTemperature: RegressionResults
-  precipitation: RegressionResults
-  snowfall: RegressionResults
-  maxWindSpeed: RegressionResults
+# Generic regression result for a metric
+type MetricRegression {
+  metric: WeatherMetric!
+  results: RegressionResults!
 }
 
-# Type representing the results of the regression analysis
 type RegressionResults {
-  coefficients: [Float]!
+  coefficients: [Float!]!
   rSquared: Float!
   testResults: FTestResults!
 }
 
-# Type representing the results of the F-test
 type FTestResults {
   fStatistic: Float!
   pValue: Float!
   significant: Boolean!
 }
 
-# Main type that combines all results
+# Main result type
 type WeatherAnalysis {
-  historicalData: [HistoricalWeatherData!]!
-  regression: Regression!
+  historicalData: [HistoricalMetricData!]!
+  regression: [MetricRegression!]!
   locationName: String
 }
 
-# Query type for fetching weather analysis
 type Query {
-  weatherAnalysis(input: WeatherDataInput!): WeatherAnalysis!
+  weatherAnalysis(input: WeatherDataInput): WeatherAnalysis
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { WeatherAnalysis } from '../graphql.schema';
+import { WeatherAnalysis, WeatherMetric } from '../graphql.schema';
 import { WeatherFetcherService } from '../weather-fetcher/weather-fetcher.service';
 import { GeocoderService } from '../geocoder/geocoder.service';
 import { RegressionService } from '../regression/regression.service';
@@ -32,9 +32,8 @@ export class WeatherService {
     startYear: number,
     endYear: number,
     averageYears: number,
-    fields: string[],
-    regressionFields: string[],
-    regressionDegree: number
+    regressionDegree: number,
+    metrics: WeatherMetric[]
   ): Promise<WeatherAnalysis> {
     const { latitude, longitude, name } =
       await this.geocoderService.geocode(location);
@@ -44,12 +43,12 @@ export class WeatherService {
       startYear,
       endYear,
       averageYears,
-      fields
+      metrics
     );
     const regression = await this.regressionService.performRegression(
       historicalData,
       regressionDegree,
-      regressionFields,
+      metrics,
       0.05
     );
     return {

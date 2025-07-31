@@ -39,35 +39,46 @@ npm run test src/weather/weather.service.spec.ts
 
 ```graphql
 query {
-  weatherAnalysis(input: {
-    location: "New York, NY"
-    startYear: 2020
-    endYear: 2023
-    averageYears: 3
-    regressionDegree: 2
-  }) {
+  weatherAnalysis(
+    input: {
+      location: "Allentown, PA"
+      startYear: 2015
+      endYear: 2024
+      averageYears: 3
+      regressionDegree: 1
+      metrics: [
+        AVERAGE_TEMPERATURE,
+        AVERAGE_APPARENT_TEMPERATURE,
+        PRECIPITATION,
+        SNOWFALL,
+        MAX_WIND_SPEED
+      ]
+    }
+  ) {
+    locationName
     historicalData {
       year
-      averageTemperature
-      precipitation
+      metric
+      value
     }
     regression {
-      averageTemperature {
+      metric
+      results {
         coefficients
         rSquared
         testResults {
+          fStatistic
           pValue
           significant
-          fStatistic
         }
       }
     }
-    locationName
   }
 }
+
 ```
 
-DISCLAIMER: The API is subject to change without warning. Use at your own risk!
+DISCLAIMER: The API is not 1.0 yet and is subject to change. Use at your own risk!
 
 ---
 
