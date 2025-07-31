@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RegressionService } from './regression.service';
-import { HistoricalWeatherData } from 'src/graphql.schema';
+import {
+  HistoricalMetricData,
+  MetricRegression,
+  WeatherMetric
+} from '../graphql.schema';
 
 describe('RegressionService', () => {
   let service: RegressionService;
@@ -23,10 +27,13 @@ describe('RegressionService', () => {
   });
 
   describe('performRegression', () => {
-    const mockData: HistoricalWeatherData[] = [
-      { year: 2020, averageTemperature: 15.1, precipitation: 100 },
-      { year: 2021, averageTemperature: 15.5, precipitation: 120 },
-      { year: 2022, averageTemperature: 15.3, precipitation: 110 }
+    const mockData: HistoricalMetricData[] = [
+      { year: 2020, metric: WeatherMetric.AVERAGE_TEMPERATURE, value: 15.1 },
+      { year: 2020, metric: WeatherMetric.PRECIPITATION, value: 100 },
+      { year: 2021, metric: WeatherMetric.AVERAGE_TEMPERATURE, value: 15.5 },
+      { year: 2021, metric: WeatherMetric.PRECIPITATION, value: 120 },
+      { year: 2022, metric: WeatherMetric.AVERAGE_TEMPERATURE, value: 15.3 },
+      { year: 2022, metric: WeatherMetric.PRECIPITATION, value: 110 }
     ];
 
     const regressionResultMock = {
@@ -47,7 +54,7 @@ describe('RegressionService', () => {
       const result = await service.performRegression(
         mockData,
         2,
-        ['averageTemperature'],
+        [WeatherMetric.AVERAGE_TEMPERATURE],
         0.05
       );
 
@@ -63,13 +70,18 @@ describe('RegressionService', () => {
         })
       );
 
-      expect(result['averageTemperature']).toMatchObject({
-        coefficients: [1.0, -0.2],
-        rSquared: 0.92,
-        testResults: {
-          pValue: 0.04,
-          significant: true,
-          fStatistic: 9.81
+      expect(
+        result.find((item) => item.metric === WeatherMetric.AVERAGE_TEMPERATURE)
+      ).toMatchObject({
+        metric: WeatherMetric.AVERAGE_TEMPERATURE,
+        results: {
+          coefficients: [1.0, -0.2],
+          rSquared: 0.92,
+          testResults: {
+            pValue: 0.04,
+            significant: true,
+            fStatistic: 9.81
+          }
         }
       });
     });
@@ -83,20 +95,29 @@ describe('RegressionService', () => {
       const result = await service.performRegression(
         mockData,
         2,
-        ['averageTemperature', 'precipitation'],
+        [WeatherMetric.AVERAGE_TEMPERATURE, WeatherMetric.PRECIPITATION],
         0.05
       );
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
-      expect(result).toHaveProperty('averageTemperature');
-      expect(result).toHaveProperty('precipitation');
+      expect(result).toContainEqual(
+        expect.objectContaining({ metric: WeatherMetric.AVERAGE_TEMPERATURE })
+      );
+      expect(result).toContainEqual(
+        expect.objectContaining({ metric: WeatherMetric.PRECIPITATION })
+      );
     });
 
     it('should throw error if fetch fails', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
 
       await expect(
-        service.performRegression(mockData, 2, ['averageTemperature'], 0.05)
+        service.performRegression(
+          mockData,
+          2,
+          [WeatherMetric.AVERAGE_TEMPERATURE],
+          0.05
+        )
       ).rejects.toThrow('Failed to perform regression analysis');
     });
   });

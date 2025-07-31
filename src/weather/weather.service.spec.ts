@@ -3,7 +3,7 @@ import { WeatherService } from './weather.service';
 import { WeatherFetcherService } from '../weather-fetcher/weather-fetcher.service';
 import { GeocoderService } from '../geocoder/geocoder.service';
 import { RegressionService } from '../regression/regression.service';
-import { WeatherAnalysis } from '../graphql.schema';
+import { WeatherAnalysis, WeatherMetric } from '../graphql.schema';
 
 describe('WeatherService', () => {
   let service: WeatherService;
@@ -44,26 +44,45 @@ describe('WeatherService', () => {
       const mockStartYear = 2020;
       const mockEndYear = 2022;
       const mockAverageYears = 3;
-      const mockFields = ['averageTemperature', 'precipitation'];
-      const mockRegressionFields = ['averageTemperature'];
+      const mockFields = [
+        WeatherMetric.AVERAGE_TEMPERATURE,
+        WeatherMetric.PRECIPITATION
+      ];
       const mockDegree = 2;
 
       const mockCoordinates = { latitude: 40.7128, longitude: -74.006 };
       const mockHistoricalData = [
-        { year: 2020, averageTemperature: 15, precipitation: 100 },
-        { year: 2021, averageTemperature: 16, precipitation: 110 }
+        { metric: WeatherMetric.AVERAGE_TEMPERATURE, year: 2020, value: 15 },
+        { metric: WeatherMetric.AVERAGE_TEMPERATURE, year: 2021, value: 16 },
+        { metric: WeatherMetric.PRECIPITATION, year: 2020, value: 100 },
+        { metric: WeatherMetric.PRECIPITATION, year: 2021, value: 110 }
       ];
-      const mockRegressionResult = {
-        averageTemperature: {
-          coefficients: [1, -0.5],
-          rSquared: 0.9,
-          testResults: {
-            pValue: 0.04,
-            significant: true,
-            fStatistic: 8.5
+      const mockRegressionResult = [
+        {
+          metric: WeatherMetric.AVERAGE_TEMPERATURE,
+          results: {
+            coefficients: [1, -0.5],
+            rSquared: 0.9,
+            testResults: {
+              pValue: 0.04,
+              significant: true,
+              fStatistic: 8.5
+            }
+          }
+        },
+        {
+          metric: WeatherMetric.PRECIPITATION,
+          results: {
+            coefficients: [1, -0.5],
+            rSquared: 0.9,
+            testResults: {
+              pValue: 0.04,
+              significant: true,
+              fStatistic: 8.5
+            }
           }
         }
-      };
+      ];
 
       mockGeocoderService.geocode.mockResolvedValue(mockCoordinates);
       mockWeatherFetcherService.findAll.mockResolvedValue(mockHistoricalData);
@@ -76,9 +95,8 @@ describe('WeatherService', () => {
         mockStartYear,
         mockEndYear,
         mockAverageYears,
-        mockFields,
-        mockRegressionFields,
-        mockDegree
+        mockDegree,
+        mockFields
       );
 
       expect(mockGeocoderService.geocode).toHaveBeenCalledWith(mockLocation);
@@ -93,7 +111,7 @@ describe('WeatherService', () => {
       expect(mockRegressionService.performRegression).toHaveBeenCalledWith(
         mockHistoricalData,
         mockDegree,
-        mockRegressionFields,
+        mockFields,
         0.05
       );
       expect(result).toEqual({
@@ -108,15 +126,9 @@ describe('WeatherService', () => {
       );
 
       await expect(
-        service.findAll(
-          'Nowhere',
-          2000,
-          2020,
-          5,
-          ['averageTemperature'],
-          ['averageTemperature'],
-          1
-        )
+        service.findAll('Nowhere', 2000, 2020, 5, 1, [
+          WeatherMetric.AVERAGE_TEMPERATURE
+        ])
       ).rejects.toThrow('Geocoding failed');
     });
   });

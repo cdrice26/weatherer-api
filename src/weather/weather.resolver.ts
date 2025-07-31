@@ -1,7 +1,7 @@
-import { Args, Resolver, Query, Info } from '@nestjs/graphql';
+import { Args, Resolver, Query } from '@nestjs/graphql';
 import { WeatherDataInput, WeatherAnalysis } from '../graphql.schema';
 import { WeatherService } from './weather.service';
-import { GraphQLError, GraphQLResolveInfo, SelectionNode } from 'graphql';
+import { GraphQLError } from 'graphql';
 import { RateLimitService } from '../rate-limit/rate-limit.service';
 /**
  * Resolver for handling GraphQL queries related to weather analysis.
@@ -22,8 +22,7 @@ export class WeatherResolver {
    */
   @Query('weatherAnalysis')
   async getWeatherAnalysis(
-    @Args('input') input: WeatherDataInput,
-    @Info() info: GraphQLResolveInfo
+    @Args('input') input: WeatherDataInput
   ): Promise<WeatherAnalysis> {
     if (!this.rateLimitService.isUnderLimit()) {
       throw new GraphQLError('Daily weather API call limit reached', {
@@ -31,17 +30,16 @@ export class WeatherResolver {
       });
     }
 
-    const [fields, regressionFields] = this.getRequestedFields(info);
     try {
-      return await this.weatherService.findAll(
+      const response = await this.weatherService.findAll(
         input.location,
         input.startYear,
         input.endYear,
         input.averageYears,
-        fields,
-        regressionFields,
-        input.regressionDegree
+        input.regressionDegree,
+        input.metrics
       );
+      return response;
     } catch (error) {
       throw new GraphQLError('Unexpected error during weather analysis', {
         extensions: {
@@ -49,48 +47,5 @@ export class WeatherResolver {
         }
       });
     }
-  }
-
-  /**
-   * Extracts the requested fields from the GraphQL query information.
-   *
-   * @param {GraphQLResolveInfo} info - Information about the GraphQL query execution.
-   * @returns {string[][]} - An array containing two arrays: one for fields and one for regression fields.
-   */
-  private getRequestedFields(info: GraphQLResolveInfo): string[][] {
-    const fields: string[] = [];
-    const regressionFields: string[] = [];
-    const fieldNodes = info.fieldNodes[0].selectionSet.selections;
-
-    fieldNodes.forEach((field: SelectionNode) => {
-      if (field.kind === 'Field') {
-        if (field.name.value === 'historicalData' && field.selectionSet) {
-          // If it's the historicalData field, extract its sub-fields
-          field.selectionSet.selections.forEach((subField: SelectionNode) => {
-            if (subField.kind === 'Field') {
-              fields.push(subField.name.value);
-            }
-          });
-        } else if (field.name.value === 'regression' && field.selectionSet) {
-          field.selectionSet.selections.forEach((subField: SelectionNode) => {
-            if (subField.kind === 'Field') {
-              regressionFields.push(subField.name.value);
-            }
-          });
-        } else {
-          // Push other fields as they are
-          fields.push(field.name.value);
-        }
-      } else if (field.kind === 'InlineFragment') {
-        // If it's an InlineFragmentNode, extract fields from it
-        field.selectionSet.selections.forEach((subField: SelectionNode) => {
-          if (subField.kind === 'Field') {
-            fields.push(subField.name.value);
-          }
-        });
-      }
-    });
-
-    return [fields, regressionFields];
   }
 }

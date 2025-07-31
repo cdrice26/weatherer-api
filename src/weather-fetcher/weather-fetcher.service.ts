@@ -2,21 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { getThisYear, getTwoDaysAgo } from '../utils/dateUtils';
-import { convertToArrayOfObjects } from '../utils/dataUtils';
-import { HistoricalWeatherData } from 'src/graphql.schema';
+import { HistoricalMetricData, WeatherMetric } from '../graphql.schema';
+import { zip } from '../utils/dataUtils';
 
 /**
  * Interface representing the structure of the weather response data.
  */
-interface WeatherResponse {
-  year?: number;
-  date?: Date;
-  averageTemperature?: number;
-  averageApparentTemperature?: number;
-  precipitation?: number;
-  snowfall?: number;
-  maxWindSpeed?: number;
-}
+type WeatherResponse = {
+  date: Date;
+  value: number;
+  metric: WeatherMetric;
+};
 
 /**
  * Service for fetching historical weather data.
@@ -24,25 +20,6 @@ interface WeatherResponse {
 @Injectable()
 export class WeatherFetcherService {
   constructor(private readonly httpService: HttpService) {}
-
-  private readonly defaultWeather: WeatherResponse[] = [
-    {
-      year: 2020,
-      averageTemperature: 15.5,
-      averageApparentTemperature: 16.0,
-      precipitation: 120.5,
-      snowfall: 30.0,
-      maxWindSpeed: 25.0
-    },
-    {
-      year: 2021,
-      averageTemperature: 15.5,
-      averageApparentTemperature: 16.0,
-      precipitation: 120.5,
-      snowfall: 30.0,
-      maxWindSpeed: 25.0
-    }
-  ];
 
   /**
    * Fetches historical weather data for a specified location and time range.
@@ -52,8 +29,7 @@ export class WeatherFetcherService {
    * @param {number} startYear - The starting year for the data.
    * @param {number} endYear - The ending year for the data.
    * @param {number} averageYears - The number of years to average the data over.
-   * @param {string[]} fields - The fields to include in the response.
-   * @param {boolean} [useDefault=false] - Whether to use default weather data for testing.
+   * @param {WeatherMetric[]} fields - The fields to include in the response.
    * @returns {Promise<HistoricalWeatherData[]>} - A promise that resolves to an array of historical weather data.
    */
   async findAll(
@@ -62,17 +38,15 @@ export class WeatherFetcherService {
     startYear: number,
     endYear: number,
     averageYears: number,
-    fields: string[],
-    useDefault = false
-  ): Promise<HistoricalWeatherData[]> {
+    fields: WeatherMetric[]
+  ): Promise<HistoricalMetricData[]> {
     try {
       const weatherData = await this.fetchWeatherData(
         lat,
         lon,
         startYear - (averageYears - 1),
         endYear,
-        fields,
-        useDefault
+        fields
       );
 
       const historicalData = this.averageWeatherData(
@@ -96,7 +70,6 @@ export class WeatherFetcherService {
    * @param {number} startYear - The starting year for the data.
    * @param {number} endYear - The ending year for the data.
    * @param {string[]} fields - The fields to include in the response.
-   * @param {boolean} [useDefault=false] - Whether to use default weather data for testing.
    * @returns {Promise<WeatherResponse[]>} - A promise that resolves to an array of weather response data.
    */
   async fetchWeatherData(
@@ -104,16 +77,8 @@ export class WeatherFetcherService {
     lon: number,
     startYear: number,
     endYear: number,
-    fields: string[],
-    useDefault = false
+    fields: WeatherMetric[]
   ): Promise<WeatherResponse[]> {
-    if (useDefault) {
-      console.warn('Using default weather data for testing');
-      return this.defaultWeather.map((data) => ({
-        ...data,
-        date: new Date(`${data.year}-01-01T00:00:00`)
-      }));
-    }
     try {
       const response = await firstValueFrom(
         this.httpService.get(
@@ -131,30 +96,26 @@ export class WeatherFetcherService {
       if (!data || !data.daily) {
         throw new Error('Invalid weather data response');
       }
-      return convertToArrayOfObjects<string | number>(data.daily).map(
-        (day) => ({
-          date: new Date(day.time + 'T00:00:00'),
-          year: new Date(day.time).getFullYear(),
-          averageTemperature:
-            typeof day.temperature_2m_mean === 'number'
-              ? day.temperature_2m_mean
-              : null,
-          averageApparentTemperature:
-            typeof day.apparent_temperature_mean === 'number'
-              ? day.apparent_temperature_mean
-              : null,
-          precipitation:
-            typeof day.precipitation_sum === 'number'
-              ? day.precipitation_sum
-              : null,
-          snowfall:
-            typeof day.snowfall_sum === 'number' ? day.snowfall_sum : null,
-          maxWindSpeed:
-            typeof day.wind_speed_10m_max === 'number'
-              ? day.wind_speed_10m_max
-              : null
-        })
+      const d = data.daily;
+      const dates: Date[] = d.time.map(
+        (time: string) => new Date(time + 'T00:00:00')
       );
+      const weather = Object.entries(d)
+        .filter((entry) => entry[0] !== 'time')
+        .map((entry) => [this.unparseField(entry[0]), entry[1]]) as [
+        WeatherMetric,
+        number[]
+      ][];
+      const formattedData = weather.flatMap(
+        (entry: [WeatherMetric, number[]]) =>
+          zip(
+            ['date', 'metric', 'value'] as string[],
+            dates,
+            new Array(dates.length).fill(entry[0]) as WeatherMetric[],
+            entry[1]
+          )
+      ) as WeatherResponse[];
+      return formattedData;
     } catch (error) {
       throw new Error('Failed to fetch weather data');
     }
@@ -163,22 +124,22 @@ export class WeatherFetcherService {
   /**
    * Parses the fields to match the API's expected format.
    *
-   * @param {string[]} fields - The fields to parse.
+   * @param {WeatherMetric[]} fields - The fields to parse.
    * @returns {string[]} - An array of parsed field names.
    */
-  parseFields(fields: string[]): string[] {
+  parseFields(fields: WeatherMetric[]): string[] {
     return fields
       .map((field) => {
         switch (field) {
-          case 'averageTemperature':
+          case WeatherMetric.AVERAGE_TEMPERATURE:
             return 'temperature_2m_mean';
-          case 'averageApparentTemperature':
+          case WeatherMetric.AVERAGE_APPARENT_TEMPERATURE:
             return 'apparent_temperature_mean';
-          case 'precipitation':
+          case WeatherMetric.PRECIPITATION:
             return 'precipitation_sum';
-          case 'snowfall':
+          case WeatherMetric.SNOWFALL:
             return 'snowfall_sum';
-          case 'maxWindSpeed':
+          case WeatherMetric.MAX_WIND_SPEED:
             return 'wind_speed_10m_max';
           default:
             return null;
@@ -187,65 +148,85 @@ export class WeatherFetcherService {
       .filter((field) => field !== null);
   }
 
+  unparseField(field: string): WeatherMetric {
+    switch (field) {
+      case 'temperature_2m_mean':
+        return WeatherMetric.AVERAGE_TEMPERATURE;
+      case 'apparent_temperature_mean':
+        return WeatherMetric.AVERAGE_APPARENT_TEMPERATURE;
+      case 'precipitation_sum':
+        return WeatherMetric.PRECIPITATION;
+      case 'snowfall_sum':
+        return WeatherMetric.SNOWFALL;
+      case 'wind_speed_10m_max':
+        return WeatherMetric.MAX_WIND_SPEED;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Averages one target year using the moving average provided
+   * @param data - The data to average
+   * @param targetYear - The year to get the average of
+   * @param windowSize - The number of years to average together
+   * @returns
+   */
+  getYearAverage(
+    data: WeatherResponse[],
+    targetYear: number,
+    windowSize: number
+  ): HistoricalMetricData[] {
+    const startRange = targetYear - windowSize + 1;
+    const endRange = targetYear;
+
+    const fields = [...new Set(data.map((item) => item.metric))];
+
+    return fields.map((metric) => {
+      const relevant = data.filter(
+        (entry) =>
+          entry.metric === metric &&
+          entry.date.getFullYear() >= startRange &&
+          entry.date.getFullYear() <= endRange
+      );
+
+      const validValues = relevant
+        .map((e) => e.value)
+        .filter((v): v is number => typeof v === 'number');
+
+      const avg =
+        validValues.length > 0
+          ? validValues.reduce((sum, val) => sum + val, 0) / validValues.length
+          : 0;
+
+      return {
+        year: targetYear,
+        metric,
+        value: avg
+      };
+    });
+  }
+
   /**
    * Averages the weather data over a specified range of years.
    *
-   * @param {WeatherResponse[]} data - The weather data to average.
+   * @param {WeatherResponse[]} flatData - The weather data to average.
    * @param {number} startYear - The starting year for averaging.
    * @param {number} endYear - The ending year for averaging.
    * @param {number} movingAverageYears - The number of years to consider for the moving average.
    * @returns {HistoricalWeatherData[]} - An array of averaged historical weather data.
    */
   averageWeatherData(
-    data: WeatherResponse[],
+    flatData: { date: Date; metric: WeatherMetric; value: number }[],
     startYear: number,
     endYear: number,
     movingAverageYears: number
-  ): HistoricalWeatherData[] {
-    const years = Array.from(
+  ): HistoricalMetricData[] {
+    return Array.from(
       { length: endYear - startYear + 1 },
       (_, i) => startYear + i
+    ).flatMap((year) =>
+      this.getYearAverage(flatData, year, movingAverageYears)
     );
-
-    return years.map((year) => {
-      const relevantData = data.filter((day) => {
-        const date = new Date(day.date);
-        return (
-          date.getFullYear() >= year - movingAverageYears + 1 &&
-          date.getFullYear() <= year
-        );
-      });
-
-      const total = relevantData.reduce(
-        (acc, day) => {
-          acc.averageTemperature += day?.averageTemperature ?? 0;
-          acc.averageApparentTemperature +=
-            day?.averageApparentTemperature ?? 0;
-          acc.precipitation += day?.precipitation ?? 0;
-          acc.snowfall += day?.snowfall ?? 0;
-          acc.maxWindSpeed += day?.maxWindSpeed ?? 0;
-          return acc;
-        },
-        {
-          averageTemperature: 0,
-          averageApparentTemperature: 0,
-          precipitation: 0,
-          snowfall: 0,
-          maxWindSpeed: 0
-        }
-      );
-
-      const count = relevantData.length;
-
-      return {
-        year: year,
-        averageTemperature: count > 0 ? total.averageTemperature / count : 0,
-        averageApparentTemperature:
-          count > 0 ? total.averageApparentTemperature / count : 0,
-        precipitation: count > 0 ? total.precipitation / count : 0,
-        snowfall: count > 0 ? total.snowfall / count : 0,
-        maxWindSpeed: count > 0 ? total.maxWindSpeed / count : 0
-      };
-    });
   }
 }

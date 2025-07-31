@@ -3,6 +3,7 @@ import { WeatherFetcherService } from './weather-fetcher.service';
 import { HttpService } from '@nestjs/axios';
 import { of } from 'rxjs';
 import { AxiosHeaders, AxiosResponse } from 'axios';
+import { WeatherMetric } from '../graphql.schema';
 
 describe('WeatherFetcherService', () => {
   let service: WeatherFetcherService;
@@ -32,17 +33,11 @@ describe('WeatherFetcherService', () => {
   });
 
   describe('fetchWeatherData', () => {
-    it('should return default weather data when useDefault is true', async () => {
-      const result = await service.fetchWeatherData(0, 0, 2020, 2021, [], true);
-      expect(result.length).toBeGreaterThan(0);
-      expect(result[0]).toHaveProperty('year');
-    });
-
     it('should fetch weather data from API and parse correctly', async () => {
       const mockApiResponse: AxiosResponse = {
         data: {
           daily: {
-            time: ['2021-01-01T00:00:00'],
+            time: ['2021-01-01'],
             temperature_2m_mean: [30],
             apparent_temperature_mean: [28],
             precipitation_sum: [0.5],
@@ -60,21 +55,37 @@ describe('WeatherFetcherService', () => {
 
       mockHttpService.get.mockReturnValueOnce(of(mockApiResponse));
 
-      const result = await service.fetchWeatherData(
-        40,
-        -75,
-        2021,
-        2021,
-        ['averageTemperature', 'precipitation'],
-        false
-      );
+      const result = await service.fetchWeatherData(40, -75, 2021, 2021, [
+        WeatherMetric.AVERAGE_TEMPERATURE,
+        WeatherMetric.PRECIPITATION
+      ]);
 
-      expect(result).toEqual([
-        expect.objectContaining({
-          year: 2021,
-          averageTemperature: 30,
-          precipitation: 0.5
-        })
+      expect(result).toStrictEqual([
+        {
+          date: new Date('2021-01-01T00:00:00'),
+          metric: WeatherMetric.AVERAGE_TEMPERATURE,
+          value: 30
+        },
+        {
+          date: new Date('2021-01-01T00:00:00'),
+          metric: WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
+          value: 28
+        },
+        {
+          date: new Date('2021-01-01T00:00:00'),
+          metric: WeatherMetric.PRECIPITATION,
+          value: 0.5
+        },
+        {
+          date: new Date('2021-01-01T00:00:00'),
+          metric: WeatherMetric.SNOWFALL,
+          value: 1.2
+        },
+        {
+          date: new Date('2021-01-01T00:00:00'),
+          metric: WeatherMetric.MAX_WIND_SPEED,
+          value: 10
+        }
       ]);
     });
 
@@ -84,18 +95,42 @@ describe('WeatherFetcherService', () => {
       );
 
       await expect(
-        service.fetchWeatherData(0, 0, 2020, 2021, [], false)
+        service.fetchWeatherData(0, 0, 2020, 2021, [])
       ).rejects.toThrow('Failed to fetch weather data');
     });
   });
 
   describe('parseFields', () => {
     it('should convert field names correctly', () => {
-      const fields = ['averageTemperature', 'snowfall', 'maxWindSpeed'];
+      const fields = [
+        WeatherMetric.AVERAGE_TEMPERATURE,
+        WeatherMetric.SNOWFALL,
+        WeatherMetric.MAX_WIND_SPEED
+      ];
       const parsed = service.parseFields(fields);
       expect(parsed).toContain('temperature_2m_mean');
       expect(parsed).toContain('snowfall_sum');
       expect(parsed).toContain('wind_speed_10m_max');
+    });
+  });
+
+  describe('unparseField', () => {
+    it('should unparse the field name correctly', () => {
+      const fields = [
+        'temperature_2m_mean',
+        'apparent_temperature_mean',
+        'precipitation_sum',
+        'snowfall_sum',
+        'wind_speed_10m_max'
+      ];
+      const parsed = fields.map((field) => service.unparseField(field));
+      expect(parsed).toStrictEqual([
+        WeatherMetric.AVERAGE_TEMPERATURE,
+        WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
+        WeatherMetric.PRECIPITATION,
+        WeatherMetric.SNOWFALL,
+        WeatherMetric.MAX_WIND_SPEED
+      ]);
     });
   });
 
@@ -104,33 +139,80 @@ describe('WeatherFetcherService', () => {
       const mockData = [
         {
           date: new Date('2020-01-01T00:00:00'),
-          year: 2020,
-          averageTemperature: 10,
-          averageApparentTemperature: 12,
-          precipitation: 1,
-          snowfall: 0,
-          maxWindSpeed: 5
+          metric: WeatherMetric.AVERAGE_TEMPERATURE,
+          value: 10
         },
         {
           date: new Date('2020-12-31T00:00:00'),
-          year: 2020,
-          averageTemperature: 20,
-          averageApparentTemperature: 22,
-          precipitation: 2,
-          snowfall: 1,
-          maxWindSpeed: 15
+          metric: WeatherMetric.AVERAGE_TEMPERATURE,
+          value: 20
+        },
+        {
+          date: new Date('2020-01-01T00:00:00'),
+          metric: WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
+          value: 12
+        },
+        {
+          date: new Date('2020-12-31T00:00:00'),
+          metric: WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
+          value: 22
+        },
+        {
+          date: new Date('2020-01-01T00:00:00'),
+          metric: WeatherMetric.PRECIPITATION,
+          value: 1
+        },
+        {
+          date: new Date('2020-12-31T00:00:00'),
+          metric: WeatherMetric.PRECIPITATION,
+          value: 2
+        },
+        {
+          date: new Date('2020-01-01T00:00:00'),
+          metric: WeatherMetric.SNOWFALL,
+          value: 0
+        },
+        {
+          date: new Date('2020-12-31T00:00:00'),
+          metric: WeatherMetric.SNOWFALL,
+          value: 1
+        },
+        {
+          date: new Date('2020-01-01T00:00:00'),
+          metric: WeatherMetric.MAX_WIND_SPEED,
+          value: 5
+        },
+        {
+          date: new Date('2020-12-31T00:00:00'),
+          metric: WeatherMetric.MAX_WIND_SPEED,
+          value: 15
         }
       ];
 
       const result = service.averageWeatherData(mockData, 2020, 2020, 1);
-      expect(result[0]).toMatchObject({
-        year: 2020,
-        averageTemperature: 15,
-        averageApparentTemperature: 17,
-        precipitation: 1.5,
-        snowfall: 0.5,
-        maxWindSpeed: 10
-      });
+      expect(result).toStrictEqual([
+        {
+          year: 2020,
+          metric: WeatherMetric.AVERAGE_TEMPERATURE,
+          value: 15
+        },
+        {
+          year: 2020,
+          metric: WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
+          value: 17
+        },
+        {
+          year: 2020,
+          metric: WeatherMetric.PRECIPITATION,
+          value: 1.5
+        },
+        { year: 2020, metric: WeatherMetric.SNOWFALL, value: 0.5 },
+        {
+          year: 2020,
+          metric: WeatherMetric.MAX_WIND_SPEED,
+          value: 10
+        }
+      ]);
     });
   });
 });

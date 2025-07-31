@@ -8,33 +8,36 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export enum WeatherMetric {
+    AVERAGE_TEMPERATURE = "AVERAGE_TEMPERATURE",
+    AVERAGE_APPARENT_TEMPERATURE = "AVERAGE_APPARENT_TEMPERATURE",
+    PRECIPITATION = "PRECIPITATION",
+    SNOWFALL = "SNOWFALL",
+    MAX_WIND_SPEED = "MAX_WIND_SPEED"
+}
+
 export class WeatherDataInput {
     location: string;
     startYear: number;
     endYear: number;
     averageYears: number;
     regressionDegree: number;
+    metrics: WeatherMetric[];
 }
 
-export class HistoricalWeatherData {
+export class HistoricalMetricData {
+    metric: WeatherMetric;
     year: number;
-    averageTemperature?: Nullable<number>;
-    averageApparentTemperature?: Nullable<number>;
-    precipitation?: Nullable<number>;
-    snowfall?: Nullable<number>;
-    maxWindSpeed?: Nullable<number>;
+    value?: Nullable<number>;
 }
 
-export class Regression {
-    averageTemperature?: Nullable<RegressionResults>;
-    averageApparentTemperature?: Nullable<RegressionResults>;
-    precipitation?: Nullable<RegressionResults>;
-    snowfall?: Nullable<RegressionResults>;
-    maxWindSpeed?: Nullable<RegressionResults>;
+export class MetricRegression {
+    metric: WeatherMetric;
+    results: RegressionResults;
 }
 
 export class RegressionResults {
-    coefficients: Nullable<number>[];
+    coefficients: number[];
     rSquared: number;
     testResults: FTestResults;
 }
@@ -46,13 +49,13 @@ export class FTestResults {
 }
 
 export class WeatherAnalysis {
-    historicalData: HistoricalWeatherData[];
-    regression: Regression;
+    historicalData: HistoricalMetricData[];
+    regression: MetricRegression[];
     locationName?: Nullable<string>;
 }
 
 export abstract class IQuery {
-    abstract weatherAnalysis(input: WeatherDataInput): WeatherAnalysis | Promise<WeatherAnalysis>;
+    abstract weatherAnalysis(input?: Nullable<WeatherDataInput>): Nullable<WeatherAnalysis> | Promise<Nullable<WeatherAnalysis>>;
 }
 
 type Nullable<T> = T | null;
