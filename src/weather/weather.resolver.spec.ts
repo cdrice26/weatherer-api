@@ -113,7 +113,6 @@ describe('WeatherResolver', () => {
     );
 
     await expect(resolver.getWeatherAnalysis(mockInput)).rejects.toMatchObject({
-      message: 'Unexpected error during weather analysis',
       extensions: { code: 'WEATHER_ANALYSIS_FAILED' }
     });
   });

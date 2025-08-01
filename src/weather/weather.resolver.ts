@@ -41,11 +41,14 @@ export class WeatherResolver {
       );
       return response;
     } catch (error) {
-      throw new GraphQLError('Unexpected error during weather analysis', {
-        extensions: {
-          code: 'WEATHER_ANALYSIS_FAILED'
+      throw new GraphQLError(
+        error?.message ?? 'Unexpected error during weather analysis',
+        {
+          extensions: {
+            code: 'WEATHER_ANALYSIS_FAILED'
+          }
         }
-      });
+      );
     }
   }
 }
