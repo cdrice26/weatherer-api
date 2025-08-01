@@ -49,7 +49,7 @@ export class WeatherFetcherService {
         fields
       );
 
-      const historicalData = this.averageWeatherData(
+      const historicalData = WeatherFetcherService.averageWeatherData(
         weatherData,
         startYear,
         endYear,
@@ -87,7 +87,7 @@ export class WeatherFetcherService {
             `&longitude=${lon}` +
             `&start_date=${startYear}-01-01` +
             `&end_date=${endYear === getThisYear() ? getTwoDaysAgo() : `${endYear}-12-31`}` +
-            `&daily=${this.parseFields(fields).join(',')}` +
+            `&daily=${WeatherFetcherService.parseFields(fields).join(',')}` +
             `&timezone=auto` +
             `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`
         )
@@ -102,10 +102,10 @@ export class WeatherFetcherService {
       );
       const weather = Object.entries(d)
         .filter((entry) => entry[0] !== 'time')
-        .map((entry) => [this.unparseField(entry[0]), entry[1]]) as [
-        WeatherMetric,
-        number[]
-      ][];
+        .map((entry) => [
+          WeatherFetcherService.unparseField(entry[0]),
+          entry[1]
+        ]) as [WeatherMetric, number[]][];
       const formattedData = weather.flatMap(
         (entry: [WeatherMetric, number[]]) =>
           zip(
@@ -127,7 +127,7 @@ export class WeatherFetcherService {
    * @param {WeatherMetric[]} fields - The fields to parse.
    * @returns {string[]} - An array of parsed field names.
    */
-  parseFields(fields: WeatherMetric[]): string[] {
+  static parseFields(fields: WeatherMetric[]): string[] {
     return fields
       .map((field) => {
         switch (field) {
@@ -148,7 +148,7 @@ export class WeatherFetcherService {
       .filter((field) => field !== null);
   }
 
-  unparseField(field: string): WeatherMetric {
+  static unparseField(field: string): WeatherMetric {
     switch (field) {
       case 'temperature_2m_mean':
         return WeatherMetric.AVERAGE_TEMPERATURE;
@@ -172,7 +172,7 @@ export class WeatherFetcherService {
    * @param windowSize - The number of years to average together
    * @returns
    */
-  getYearAverage(
+  static getYearAverage(
     data: WeatherResponse[],
     targetYear: number,
     windowSize: number
@@ -216,7 +216,7 @@ export class WeatherFetcherService {
    * @param {number} movingAverageYears - The number of years to consider for the moving average.
    * @returns {HistoricalWeatherData[]} - An array of averaged historical weather data.
    */
-  averageWeatherData(
+  static averageWeatherData(
     flatData: { date: Date; metric: WeatherMetric; value: number }[],
     startYear: number,
     endYear: number,
@@ -226,7 +226,7 @@ export class WeatherFetcherService {
       { length: endYear - startYear + 1 },
       (_, i) => startYear + i
     ).flatMap((year) =>
-      this.getYearAverage(flatData, year, movingAverageYears)
+      WeatherFetcherService.getYearAverage(flatData, year, movingAverageYears)
     );
   }
 }

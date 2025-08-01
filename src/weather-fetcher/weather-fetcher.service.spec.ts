@@ -107,7 +107,7 @@ describe('WeatherFetcherService', () => {
         WeatherMetric.SNOWFALL,
         WeatherMetric.MAX_WIND_SPEED
       ];
-      const parsed = service.parseFields(fields);
+      const parsed = WeatherFetcherService.parseFields(fields);
       expect(parsed).toContain('temperature_2m_mean');
       expect(parsed).toContain('snowfall_sum');
       expect(parsed).toContain('wind_speed_10m_max');
@@ -123,7 +123,9 @@ describe('WeatherFetcherService', () => {
         'snowfall_sum',
         'wind_speed_10m_max'
       ];
-      const parsed = fields.map((field) => service.unparseField(field));
+      const parsed = fields.map((field) =>
+        WeatherFetcherService.unparseField(field)
+      );
       expect(parsed).toStrictEqual([
         WeatherMetric.AVERAGE_TEMPERATURE,
         WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
@@ -189,7 +191,12 @@ describe('WeatherFetcherService', () => {
         }
       ];
 
-      const result = service.averageWeatherData(mockData, 2020, 2020, 1);
+      const result = WeatherFetcherService.averageWeatherData(
+        mockData,
+        2020,
+        2020,
+        1
+      );
       expect(result).toStrictEqual([
         {
           year: 2020,
