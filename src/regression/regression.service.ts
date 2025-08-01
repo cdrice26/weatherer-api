@@ -29,8 +29,7 @@ export class RegressionService {
     try {
       const promises = fields.map(async (field) => {
         const relevantData = data.filter((item) => item.metric === field);
-        console.log(relevantData);
-        const years = relevantData.map((item) => item.year);
+        const dates = relevantData.map((item) => item.date);
         const fieldData = relevantData.map((item) => item.value);
         const response = await fetch(process.env.REGRESSION_API_URL, {
           method: 'POST',
@@ -38,7 +37,7 @@ export class RegressionService {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            x: years,
+            x: dates.map((date) => date.getTime()),
             y: fieldData,
             degree: regressionDegree
           })

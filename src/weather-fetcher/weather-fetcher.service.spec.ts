@@ -136,88 +136,78 @@ describe('WeatherFetcherService', () => {
     });
   });
 
-  describe('averageWeatherData', () => {
-    it('should calculate averages correctly', () => {
-      const mockData = [
+  describe('getDailyMovingAverage', () => {
+    const mockData = [
+      {
+        date: new Date('2021-01-01'),
+        metric: WeatherMetric.AVERAGE_TEMPERATURE,
+        value: 10
+      },
+      {
+        date: new Date('2021-01-02'),
+        metric: WeatherMetric.AVERAGE_TEMPERATURE,
+        value: 20
+      },
+      {
+        date: new Date('2021-01-03'),
+        metric: WeatherMetric.AVERAGE_TEMPERATURE,
+        value: 30
+      },
+      {
+        date: new Date('2021-01-01'),
+        metric: WeatherMetric.PRECIPITATION,
+        value: 1
+      },
+      {
+        date: new Date('2021-01-02'),
+        metric: WeatherMetric.PRECIPITATION,
+        value: 2
+      },
+      {
+        date: new Date('2021-01-03'),
+        metric: WeatherMetric.PRECIPITATION,
+        value: 3
+      }
+    ];
+
+    it('should compute a 2-day moving average correctly', () => {
+      const result = WeatherFetcherService.getDailyMovingAverage(
+        mockData,
+        new Date('2021-01-01'),
+        new Date('2021-01-03'),
+        2
+      );
+
+      expect(result).toStrictEqual([
         {
-          date: new Date('2020-01-01T00:00:00'),
+          date: new Date('2021-01-01'),
           metric: WeatherMetric.AVERAGE_TEMPERATURE,
           value: 10
         },
         {
-          date: new Date('2020-12-31T00:00:00'),
-          metric: WeatherMetric.AVERAGE_TEMPERATURE,
-          value: 20
-        },
-        {
-          date: new Date('2020-01-01T00:00:00'),
-          metric: WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
-          value: 12
-        },
-        {
-          date: new Date('2020-12-31T00:00:00'),
-          metric: WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
-          value: 22
-        },
-        {
-          date: new Date('2020-01-01T00:00:00'),
+          date: new Date('2021-01-01'),
           metric: WeatherMetric.PRECIPITATION,
           value: 1
         },
         {
-          date: new Date('2020-12-31T00:00:00'),
-          metric: WeatherMetric.PRECIPITATION,
-          value: 2
-        },
-        {
-          date: new Date('2020-01-01T00:00:00'),
-          metric: WeatherMetric.SNOWFALL,
-          value: 0
-        },
-        {
-          date: new Date('2020-12-31T00:00:00'),
-          metric: WeatherMetric.SNOWFALL,
-          value: 1
-        },
-        {
-          date: new Date('2020-01-01T00:00:00'),
-          metric: WeatherMetric.MAX_WIND_SPEED,
-          value: 5
-        },
-        {
-          date: new Date('2020-12-31T00:00:00'),
-          metric: WeatherMetric.MAX_WIND_SPEED,
-          value: 15
-        }
-      ];
-
-      const result = WeatherFetcherService.averageWeatherData(
-        mockData,
-        2020,
-        2020,
-        1
-      );
-      expect(result).toStrictEqual([
-        {
-          year: 2020,
+          date: new Date('2021-01-02'),
           metric: WeatherMetric.AVERAGE_TEMPERATURE,
           value: 15
         },
         {
-          year: 2020,
-          metric: WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
-          value: 17
-        },
-        {
-          year: 2020,
+          date: new Date('2021-01-02'),
           metric: WeatherMetric.PRECIPITATION,
           value: 1.5
         },
-        { year: 2020, metric: WeatherMetric.SNOWFALL, value: 0.5 },
         {
-          year: 2020,
-          metric: WeatherMetric.MAX_WIND_SPEED,
-          value: 10
+          date: new Date('2021-01-03'),
+          metric: WeatherMetric.AVERAGE_TEMPERATURE,
+          value: 25
+        },
+        {
+          date: new Date('2021-01-03'),
+          metric: WeatherMetric.PRECIPITATION,
+          value: 2.5
         }
       ]);
     });
