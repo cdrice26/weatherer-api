@@ -51,7 +51,7 @@ export class WeatherFetcherService {
         weatherData,
         new Date(`${startYear}-01-01`),
         new Date(`${endYear}-12-31`),
-        30 // for example, a 30-day moving average
+        Math.floor(averageYears * 365.25)
       );
 
       return historicalData;
