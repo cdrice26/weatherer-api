@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, from, map, mergeMap, toArray } from 'rxjs';
 import { getThisYear, getTwoDaysAgo } from '../utils/dateUtils';
 import { HistoricalMetricData, WeatherMetric } from '../graphql.schema';
 import { zip } from '../utils/dataUtils';
@@ -40,11 +40,11 @@ export class WeatherFetcherService {
         fields
       );
 
-      const historicalData = WeatherFetcherService.getDailyMovingAverage(
+      const historicalData = await WeatherFetcherService.getDailyMovingAverage(
         weatherData,
         new Date(`${startYear}-01-01`),
         new Date(`${endYear}-12-31`),
-        30 // for example, a 30-day moving average
+        Math.floor(365.25 * averageYears)
       );
 
       return historicalData;
@@ -213,32 +213,42 @@ export class WeatherFetcherService {
    * @param windowSizeInDays - Number of days to average
    * @returns - The data, with values replaced by moving averages
    */
-  static getDailyMovingAverage(
+  static async getDailyMovingAverage(
     data: HistoricalMetricData[],
     startDate: Date,
     endDate: Date,
     windowSizeInDays: number
-  ): HistoricalMetricData[] {
+  ): Promise<HistoricalMetricData[]> {
     const metrics = this.getUniqueMetrics(data);
+    const targetDates = this.generateDateRange(startDate, endDate);
 
-    return this.generateDateRange(startDate, endDate).flatMap((date) =>
-      metrics.map((metric) => {
-        const windowData = this.filterDataWindow(
-          data,
-          date,
-          windowSizeInDays,
-          metric
-        );
-        const values = windowData
-          .map((d) => d.value)
-          .filter((v): v is number => typeof v === 'number');
+    return firstValueFrom(
+      from(targetDates).pipe(
+        mergeMap((date) =>
+          from(
+            metrics.map<HistoricalMetricData>((metric) => {
+              const windowData = this.filterDataWindow(
+                data,
+                date,
+                windowSizeInDays,
+                metric
+              );
+              const values = windowData
+                .map((d) => d.value)
+                .filter((v): v is number => typeof v === 'number');
 
-        return {
-          date,
-          metric,
-          value: this.calculateAverage(values)
-        };
-      })
+              const result = {
+                date,
+                metric,
+                value: this.calculateAverage(values)
+              };
+
+              return result;
+            })
+          )
+        ),
+        toArray()
+      )
     );
   }
 }
