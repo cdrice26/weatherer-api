@@ -44,7 +44,6 @@ export class RegressionService {
         });
 
         if (!response.ok) {
-          console.log(await response.json());
           throw new Error('Failed to perform regression analysis');
         }
 

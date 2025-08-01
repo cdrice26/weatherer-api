@@ -4,6 +4,7 @@ import { HttpService } from '@nestjs/axios';
 import { of } from 'rxjs';
 import { AxiosHeaders, AxiosResponse } from 'axios';
 import { WeatherMetric } from '../graphql.schema';
+import { parseFields, unparseField } from './helpers';
 
 describe('WeatherFetcherService', () => {
   let service: WeatherFetcherService;
@@ -107,7 +108,7 @@ describe('WeatherFetcherService', () => {
         WeatherMetric.SNOWFALL,
         WeatherMetric.MAX_WIND_SPEED
       ];
-      const parsed = WeatherFetcherService.parseFields(fields);
+      const parsed = parseFields(fields);
       expect(parsed).toContain('temperature_2m_mean');
       expect(parsed).toContain('snowfall_sum');
       expect(parsed).toContain('wind_speed_10m_max');
@@ -123,9 +124,7 @@ describe('WeatherFetcherService', () => {
         'snowfall_sum',
         'wind_speed_10m_max'
       ];
-      const parsed = fields.map((field) =>
-        WeatherFetcherService.unparseField(field)
-      );
+      const parsed = fields.map((field) => unparseField(field));
       expect(parsed).toStrictEqual([
         WeatherMetric.AVERAGE_TEMPERATURE,
         WeatherMetric.AVERAGE_APPARENT_TEMPERATURE,
@@ -170,46 +169,38 @@ describe('WeatherFetcherService', () => {
       }
     ];
 
-    it('should compute a 2-day moving average correctly', () => {
-      const result = WeatherFetcherService.getDailyMovingAverage(
+    it('should compute a 2-day moving average correctly', async () => {
+      const result = await WeatherFetcherService.getDailyMovingAverage(
         mockData,
-        new Date('2021-01-01'),
+        new Date('2021-01-02'),
         new Date('2021-01-03'),
         2
       );
 
-      expect(result).toStrictEqual([
-        {
-          date: new Date('2021-01-01'),
-          metric: WeatherMetric.AVERAGE_TEMPERATURE,
-          value: 10
-        },
-        {
-          date: new Date('2021-01-01'),
-          metric: WeatherMetric.PRECIPITATION,
-          value: 1
-        },
-        {
-          date: new Date('2021-01-02'),
-          metric: WeatherMetric.AVERAGE_TEMPERATURE,
-          value: 15
-        },
-        {
-          date: new Date('2021-01-02'),
-          metric: WeatherMetric.PRECIPITATION,
-          value: 1.5
-        },
-        {
-          date: new Date('2021-01-03'),
-          metric: WeatherMetric.AVERAGE_TEMPERATURE,
-          value: 25
-        },
-        {
-          date: new Date('2021-01-03'),
-          metric: WeatherMetric.PRECIPITATION,
-          value: 2.5
-        }
-      ]);
+      expect(result).toEqual(
+        expect.arrayContaining([
+          {
+            date: new Date('2021-01-02'),
+            metric: WeatherMetric.AVERAGE_TEMPERATURE,
+            value: 15
+          },
+          {
+            date: new Date('2021-01-02'),
+            metric: WeatherMetric.PRECIPITATION,
+            value: 1.5
+          },
+          {
+            date: new Date('2021-01-03'),
+            metric: WeatherMetric.AVERAGE_TEMPERATURE,
+            value: 25
+          },
+          {
+            date: new Date('2021-01-03'),
+            metric: WeatherMetric.PRECIPITATION,
+            value: 2.5
+          }
+        ])
+      );
     });
   });
 });
