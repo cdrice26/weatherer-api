@@ -5,8 +5,10 @@ import { upperDirectiveTransformer } from './common/directives/upper-case.direct
 import { WeatherModule } from './weather/weather.module';
 import { ConfigModule } from '@nestjs/config';
 import { weatherSchema } from './weather/schema-loader';
+import { DateScalar } from './common/scalars/date.scalar';
 
 @Module({
+  providers: [DateScalar],
   imports: [
     WeatherModule,
     ConfigModule.forRoot({

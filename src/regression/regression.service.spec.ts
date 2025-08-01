@@ -1,10 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RegressionService } from './regression.service';
-import {
-  HistoricalMetricData,
-  MetricRegression,
-  WeatherMetric
-} from '../graphql.schema';
+import { HistoricalMetricData, WeatherMetric } from '../graphql.schema';
 
 describe('RegressionService', () => {
   let service: RegressionService;
@@ -28,12 +24,36 @@ describe('RegressionService', () => {
 
   describe('performRegression', () => {
     const mockData: HistoricalMetricData[] = [
-      { year: 2020, metric: WeatherMetric.AVERAGE_TEMPERATURE, value: 15.1 },
-      { year: 2020, metric: WeatherMetric.PRECIPITATION, value: 100 },
-      { year: 2021, metric: WeatherMetric.AVERAGE_TEMPERATURE, value: 15.5 },
-      { year: 2021, metric: WeatherMetric.PRECIPITATION, value: 120 },
-      { year: 2022, metric: WeatherMetric.AVERAGE_TEMPERATURE, value: 15.3 },
-      { year: 2022, metric: WeatherMetric.PRECIPITATION, value: 110 }
+      {
+        date: new Date('2020-01-01T00:00:00'),
+        metric: WeatherMetric.AVERAGE_TEMPERATURE,
+        value: 15.1
+      },
+      {
+        date: new Date('2020-12-31T00:00:00'),
+        metric: WeatherMetric.PRECIPITATION,
+        value: 100
+      },
+      {
+        date: new Date('2021-01-01T00:00:00'),
+        metric: WeatherMetric.AVERAGE_TEMPERATURE,
+        value: 15.5
+      },
+      {
+        date: new Date('2021-12-31T00:00:00'),
+        metric: WeatherMetric.PRECIPITATION,
+        value: 120
+      },
+      {
+        date: new Date('2022-01-01T00:00:00'),
+        metric: WeatherMetric.AVERAGE_TEMPERATURE,
+        value: 15.3
+      },
+      {
+        date: new Date('2022-12-31T00:00:00'),
+        metric: WeatherMetric.PRECIPITATION,
+        value: 110
+      }
     ];
 
     const regressionResultMock = {

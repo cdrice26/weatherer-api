@@ -41,8 +41,16 @@ describe('WeatherResolver', () => {
 
   const mockResult: WeatherAnalysis = {
     historicalData: [
-      { metric: WeatherMetric.AVERAGE_TEMPERATURE, year: 2020, value: 14.3 },
-      { metric: WeatherMetric.PRECIPITATION, year: 2020, value: 120.0 }
+      {
+        metric: WeatherMetric.AVERAGE_TEMPERATURE,
+        date: new Date('2020-01-01T00:00:00'),
+        value: 14.3
+      },
+      {
+        metric: WeatherMetric.PRECIPITATION,
+        date: new Date('2020-12-31T00:00:00'),
+        value: 120.0
+      }
     ],
     regression: [
       {

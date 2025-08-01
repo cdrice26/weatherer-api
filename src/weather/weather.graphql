@@ -1,3 +1,5 @@
+scalar Date
+
 # Input type for the weather data request
 input WeatherDataInput {
   location: String!
@@ -20,7 +22,7 @@ enum WeatherMetric {
 # Historical data entry for a specific year and metric
 type HistoricalMetricData {
   metric: WeatherMetric!
-  year: Int!
+  date: Date!
   value: Float
 }
 

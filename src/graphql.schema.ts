@@ -27,7 +27,7 @@ export class WeatherDataInput {
 
 export class HistoricalMetricData {
     metric: WeatherMetric;
-    year: number;
+    date: Date;
     value?: Nullable<number>;
 }
 

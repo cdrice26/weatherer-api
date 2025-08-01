@@ -6,15 +6,6 @@ import { HistoricalMetricData, WeatherMetric } from '../graphql.schema';
 import { zip } from '../utils/dataUtils';
 
 /**
- * Interface representing the structure of the weather response data.
- */
-type WeatherResponse = {
-  date: Date;
-  value: number;
-  metric: WeatherMetric;
-};
-
-/**
  * Service for fetching historical weather data.
  */
 @Injectable()
@@ -49,11 +40,11 @@ export class WeatherFetcherService {
         fields
       );
 
-      const historicalData = WeatherFetcherService.averageWeatherData(
+      const historicalData = WeatherFetcherService.getDailyMovingAverage(
         weatherData,
-        startYear,
-        endYear,
-        averageYears
+        new Date(`${startYear}-01-01`),
+        new Date(`${endYear}-12-31`),
+        30 // for example, a 30-day moving average
       );
 
       return historicalData;
@@ -70,7 +61,7 @@ export class WeatherFetcherService {
    * @param {number} startYear - The starting year for the data.
    * @param {number} endYear - The ending year for the data.
    * @param {string[]} fields - The fields to include in the response.
-   * @returns {Promise<WeatherResponse[]>} - A promise that resolves to an array of weather response data.
+   * @returns {Promise<HistoricalMetricData[]>} - A promise that resolves to an array of weather response data.
    */
   async fetchWeatherData(
     lat: number,
@@ -78,7 +69,7 @@ export class WeatherFetcherService {
     startYear: number,
     endYear: number,
     fields: WeatherMetric[]
-  ): Promise<WeatherResponse[]> {
+  ): Promise<HistoricalMetricData[]> {
     try {
       const response = await firstValueFrom(
         this.httpService.get(
@@ -113,8 +104,8 @@ export class WeatherFetcherService {
             dates,
             new Array(dates.length).fill(entry[0]) as WeatherMetric[],
             entry[1]
-          )
-      ) as WeatherResponse[];
+          ) as unknown as HistoricalMetricData[]
+      ) as HistoricalMetricData[];
       return formattedData;
     } catch (error) {
       throw new Error('Failed to fetch weather data');
@@ -166,67 +157,88 @@ export class WeatherFetcherService {
   }
 
   /**
-   * Averages one target year using the moving average provided
-   * @param data - The data to average
-   * @param targetYear - The year to get the average of
-   * @param windowSize - The number of years to average together
-   * @returns
+   * Filters data within a moving window for a given date and metric.
    */
-  static getYearAverage(
-    data: WeatherResponse[],
-    targetYear: number,
-    windowSize: number
+  static filterDataWindow(
+    data: HistoricalMetricData[],
+    targetDate: Date,
+    windowSizeDays: number,
+    metric: WeatherMetric
   ): HistoricalMetricData[] {
-    const startRange = targetYear - windowSize + 1;
-    const endRange = targetYear;
+    const start = new Date(targetDate);
+    start.setDate(start.getDate() - windowSizeDays + 1);
 
-    const fields = [...new Set(data.map((item) => item.metric))];
+    return data.filter(
+      (entry) =>
+        entry.metric === metric &&
+        entry.date >= start &&
+        entry.date <= targetDate
+    );
+  }
 
-    return fields.map((metric) => {
-      const relevant = data.filter(
-        (entry) =>
-          entry.metric === metric &&
-          entry.date.getFullYear() >= startRange &&
-          entry.date.getFullYear() <= endRange
-      );
+  /**
+   * Calculates the average of valid values.
+   */
+  static calculateAverage(values: number[]): number {
+    return values.length
+      ? values.reduce((sum, val) => sum + val, 0) / values.length
+      : 0;
+  }
 
-      const validValues = relevant
-        .map((e) => e.value)
-        .filter((v): v is number => typeof v === 'number');
+  /**
+   * Gets all unique metrics in the dataset.
+   */
+  static getUniqueMetrics(data: HistoricalMetricData[]): WeatherMetric[] {
+    return [...new Set(data.map((entry) => entry.metric))];
+  }
 
-      const avg =
-        validValues.length > 0
-          ? validValues.reduce((sum, val) => sum + val, 0) / validValues.length
-          : 0;
-
-      return {
-        year: targetYear,
-        metric,
-        value: avg
-      };
+  /**
+   * Generates all target dates in a range.
+   */
+  static generateDateRange(startDate: Date, endDate: Date): Date[] {
+    const days =
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+    return Array.from({ length: Math.floor(days) + 1 }, (_, i) => {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      return date;
     });
   }
 
   /**
-   * Averages the weather data over a specified range of years.
    *
-   * @param {WeatherResponse[]} flatData - The weather data to average.
-   * @param {number} startYear - The starting year for averaging.
-   * @param {number} endYear - The ending year for averaging.
-   * @param {number} movingAverageYears - The number of years to consider for the moving average.
-   * @returns {HistoricalWeatherData[]} - An array of averaged historical weather data.
+   * @param data - The data to get the daily moving averages from
+   * @param startDate - The first date to consider
+   * @param endDate - The last date to consider
+   * @param windowSizeInDays - Number of days to average
+   * @returns - The data, with values replaced by moving averages
    */
-  static averageWeatherData(
-    flatData: { date: Date; metric: WeatherMetric; value: number }[],
-    startYear: number,
-    endYear: number,
-    movingAverageYears: number
+  static getDailyMovingAverage(
+    data: HistoricalMetricData[],
+    startDate: Date,
+    endDate: Date,
+    windowSizeInDays: number
   ): HistoricalMetricData[] {
-    return Array.from(
-      { length: endYear - startYear + 1 },
-      (_, i) => startYear + i
-    ).flatMap((year) =>
-      WeatherFetcherService.getYearAverage(flatData, year, movingAverageYears)
+    const metrics = this.getUniqueMetrics(data);
+
+    return this.generateDateRange(startDate, endDate).flatMap((date) =>
+      metrics.map((metric) => {
+        const windowData = this.filterDataWindow(
+          data,
+          date,
+          windowSizeInDays,
+          metric
+        );
+        const values = windowData
+          .map((d) => d.value)
+          .filter((v): v is number => typeof v === 'number');
+
+        return {
+          date,
+          metric,
+          value: this.calculateAverage(values)
+        };
+      })
     );
   }
 }
