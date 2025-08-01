@@ -170,8 +170,8 @@ describe('WeatherFetcherService', () => {
       }
     ];
 
-    it('should compute a 2-day moving average correctly', () => {
-      const result = WeatherFetcherService.getDailyMovingAverage(
+    it('should compute a 2-day moving average correctly', async () => {
+      const result = await WeatherFetcherService.getDailyMovingAverage(
         mockData,
         new Date('2021-01-01'),
         new Date('2021-01-03'),
