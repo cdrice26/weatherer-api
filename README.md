@@ -66,6 +66,7 @@ query {
       results {
         coefficients
         rSquared
+        baseDate
         testResults {
           fStatistic
           pValue

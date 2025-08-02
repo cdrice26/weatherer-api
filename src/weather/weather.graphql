@@ -36,6 +36,7 @@ type RegressionResults {
   coefficients: [Float!]!
   rSquared: Float!
   testResults: FTestResults!
+  baseDate: Date!
 }
 
 type FTestResults {

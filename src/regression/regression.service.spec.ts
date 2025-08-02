@@ -65,7 +65,7 @@ describe('RegressionService', () => {
       }
     };
 
-    it('should perform regression and return result for one field', async () => {
+    it('should perform regression and include baseDate in response', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => regressionResultMock
@@ -78,21 +78,29 @@ describe('RegressionService', () => {
         0.05
       );
 
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(global.fetch).toHaveBeenCalledWith(
-        process.env.REGRESSION_API_URL,
-        expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: expect.any(String)
-        })
+      const tempData = mockData.filter(
+        (d) => d.metric === WeatherMetric.AVERAGE_TEMPERATURE
+      );
+      const expectedBaseDate = new Date(
+        Math.min(...tempData.map((d) => d.date.getTime()))
       );
 
-      expect(
-        result.find((item) => item.metric === WeatherMetric.AVERAGE_TEMPERATURE)
-      ).toMatchObject({
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      const fetchBody = JSON.parse(
+        (global.fetch as jest.Mock).mock.calls[0][1].body
+      );
+      const expectedX = tempData.map(
+        (d) =>
+          (d.date.getTime() - expectedBaseDate.getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
+
+      expect(fetchBody.x).toEqual(expectedX);
+      expect(fetchBody.degree).toBe(2);
+      expect(fetchBody.y).toEqual(tempData.map((d) => d.value));
+
+      expect(result[0]).toMatchObject({
         metric: WeatherMetric.AVERAGE_TEMPERATURE,
         results: {
           coefficients: [1.0, -0.2],
@@ -101,12 +109,13 @@ describe('RegressionService', () => {
             pValue: 0.04,
             significant: true,
             fStatistic: 9.81
-          }
+          },
+          baseDate: expectedBaseDate
         }
       });
     });
 
-    it('should handle multiple fields and responses', async () => {
+    it('should handle multiple fields and responses with baseDate', async () => {
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
         json: async () => regressionResultMock
@@ -120,11 +129,19 @@ describe('RegressionService', () => {
       );
 
       expect(global.fetch).toHaveBeenCalledTimes(2);
-      expect(result).toContainEqual(
-        expect.objectContaining({ metric: WeatherMetric.AVERAGE_TEMPERATURE })
+
+      const averageTempResult = result.find(
+        (r) => r.metric === WeatherMetric.AVERAGE_TEMPERATURE
       );
-      expect(result).toContainEqual(
-        expect.objectContaining({ metric: WeatherMetric.PRECIPITATION })
+      const precipitationResult = result.find(
+        (r) => r.metric === WeatherMetric.PRECIPITATION
+      );
+
+      expect(averageTempResult?.results.baseDate).toEqual(
+        new Date('2020-01-01T00:00:00')
+      );
+      expect(precipitationResult?.results.baseDate).toEqual(
+        new Date('2020-12-31T00:00:00')
       );
     });
 
