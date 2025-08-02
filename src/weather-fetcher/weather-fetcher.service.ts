@@ -54,8 +54,6 @@ export class WeatherFetcherService {
         Math.floor(averageYears * 365.25)
       );
 
-      console.log(historicalData);
-
       return historicalData;
     } catch (e) {
       throw new Error('Failed to fetch weather data');
