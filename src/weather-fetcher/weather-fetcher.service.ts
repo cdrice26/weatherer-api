@@ -42,7 +42,7 @@ export class WeatherFetcherService {
       const weatherData = await this.fetchWeatherData(
         lat,
         lon,
-        startYear - (averageYears - 1),
+        startYear - averageYears,
         endYear,
         fields
       );
@@ -53,6 +53,8 @@ export class WeatherFetcherService {
         new Date(`${endYear}-12-31`),
         Math.floor(averageYears * 365.25)
       );
+
+      console.log(historicalData);
 
       return historicalData;
     } catch (e) {
