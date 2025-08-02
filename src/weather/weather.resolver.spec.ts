@@ -58,6 +58,7 @@ describe('WeatherResolver', () => {
         results: {
           coefficients: [1.2, -0.3],
           rSquared: 0.95,
+          baseDate: new Date(),
           testResults: {
             pValue: 0.03,
             significant: true,
@@ -70,6 +71,7 @@ describe('WeatherResolver', () => {
         results: {
           coefficients: [0.8],
           rSquared: 0.87,
+          baseDate: new Date(),
           testResults: {
             pValue: 0.05,
             significant: true,

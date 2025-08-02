@@ -40,6 +40,7 @@ export class RegressionResults {
     coefficients: number[];
     rSquared: number;
     testResults: FTestResults;
+    baseDate: Date;
 }
 
 export class FTestResults {
