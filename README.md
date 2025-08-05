@@ -57,7 +57,7 @@ query {
   ) {
     locationName
     historicalData {
-      year
+      date
       metric
       value
     }
