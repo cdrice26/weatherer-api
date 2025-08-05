@@ -2,15 +2,18 @@ import { Injectable } from '@nestjs/common';
 import {
   HistoricalMetricData,
   MetricRegression,
-  RegressionResults,
   WeatherMetric
 } from '../graphql.schema';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 /**
  * Service for performing regression analysis on historical weather data.
  */
 @Injectable()
 export class RegressionService {
+  constructor(private readonly httpService: HttpService) {}
+
   /**
    * Performs regression analysis on the provided historical weather data.
    *
@@ -34,25 +37,18 @@ export class RegressionService {
         const dates = relevantData.map((item) => item.date);
         const baseTime = Math.min(...dates.map((date) => date.getTime()));
         const fieldData = relevantData.map((item) => item.value);
-        const response = await fetch(process.env.REGRESSION_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        const response = await firstValueFrom(
+          this.httpService.post(process.env.REGRESSION_API_URL, {
             x: dates.map(
               (date) => (date.getTime() - baseTime) / (1000 * 60 * 60 * 24)
             ),
             y: fieldData,
             degree: regressionDegree
           })
-        });
+        );
 
-        if (!response.ok) {
-          throw new Error('Failed to perform regression analysis');
-        }
+        const result = response.data;
 
-        const result = await response.json();
         return {
           metric: field,
           results: {
@@ -70,6 +66,7 @@ export class RegressionService {
       const regressionResults = await Promise.all(promises);
       return regressionResults;
     } catch (e) {
+      console.log(e);
       throw new Error('Failed to perform regression analysis.');
     }
   }

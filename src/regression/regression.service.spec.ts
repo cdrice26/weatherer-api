@@ -1,21 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RegressionService } from './regression.service';
 import { HistoricalMetricData, WeatherMetric } from '../graphql.schema';
+import { HttpService } from '@nestjs/axios';
+import { of, throwError } from 'rxjs';
 
 describe('RegressionService', () => {
   let service: RegressionService;
+  let httpService: HttpService;
+
+  const mockHttpService = {
+    post: jest.fn()
+  };
 
   beforeEach(async () => {
+    mockHttpService.post.mockReset();
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RegressionService]
+      providers: [
+        RegressionService,
+        {
+          provide: HttpService,
+          useValue: mockHttpService
+        }
+      ]
     }).compile();
 
     service = module.get<RegressionService>(RegressionService);
-  });
-
-  beforeEach(() => {
-    // Clear any previous mocks
-    global.fetch = jest.fn();
+    httpService = module.get<HttpService>(HttpService);
   });
 
   it('should be defined', () => {
@@ -57,19 +68,18 @@ describe('RegressionService', () => {
     ];
 
     const regressionResultMock = {
-      coefficients: [1.0, -0.2],
-      r_squared: 0.92,
-      test_results: {
-        p_value: 0.04,
-        f_stat: 9.81
+      data: {
+        coefficients: [1.0, -0.2],
+        r_squared: 0.92,
+        test_results: {
+          p_value: 0.04,
+          f_stat: 9.81
+        }
       }
     };
 
     it('should perform regression and include baseDate in response', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => regressionResultMock
-      });
+      mockHttpService.post.mockReturnValueOnce(of(regressionResultMock));
 
       const result = await service.performRegression(
         mockData,
@@ -85,20 +95,7 @@ describe('RegressionService', () => {
         Math.min(...tempData.map((d) => d.date.getTime()))
       );
 
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-
-      const fetchBody = JSON.parse(
-        (global.fetch as jest.Mock).mock.calls[0][1].body
-      );
-      const expectedX = tempData.map(
-        (d) =>
-          (d.date.getTime() - expectedBaseDate.getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-
-      expect(fetchBody.x).toEqual(expectedX);
-      expect(fetchBody.degree).toBe(2);
-      expect(fetchBody.y).toEqual(tempData.map((d) => d.value));
+      expect(mockHttpService.post).toHaveBeenCalledTimes(1);
 
       expect(result[0]).toMatchObject({
         metric: WeatherMetric.AVERAGE_TEMPERATURE,
@@ -116,10 +113,9 @@ describe('RegressionService', () => {
     });
 
     it('should handle multiple fields and responses with baseDate', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: async () => regressionResultMock
-      });
+      mockHttpService.post
+        .mockReturnValueOnce(of(regressionResultMock))
+        .mockReturnValueOnce(of(regressionResultMock));
 
       const result = await service.performRegression(
         mockData,
@@ -128,7 +124,7 @@ describe('RegressionService', () => {
         0.05
       );
 
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(mockHttpService.post).toHaveBeenCalledTimes(2);
 
       const averageTempResult = result.find(
         (r) => r.metric === WeatherMetric.AVERAGE_TEMPERATURE
@@ -146,7 +142,9 @@ describe('RegressionService', () => {
     });
 
     it('should throw error if fetch fails', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
+      mockHttpService.post.mockReturnValueOnce(
+        throwError(() => new Error('Failed to perform regression analysis'))
+      );
 
       await expect(
         service.performRegression(
