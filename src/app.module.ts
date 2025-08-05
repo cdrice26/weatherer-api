@@ -17,7 +17,8 @@ import { DateScalar } from './common/scalars/date.scalar';
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       typeDefs: weatherSchema,
-      transformSchema: (schema) => upperDirectiveTransformer(schema, 'upper')
+      transformSchema: (schema) => upperDirectiveTransformer(schema, 'upper'),
+      graphiql: true
     })
   ]
 })
